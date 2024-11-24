@@ -123,9 +123,8 @@
             android:layout_marginLeft="20dp"
             android:layout_weight="4"
             android:gravity="center_vertical"
-            android:text="Work Type"
+            android:text="Work Type Seq"
             android:layout_gravity="center"
-
             android:textColor="#FFFFFF"
             android:textStyle="bold" >
         </TextView>

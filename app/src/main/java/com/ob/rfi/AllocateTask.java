@@ -26,6 +26,9 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
+import com.ob.database.db_tables.ClientTableModel;
+import com.ob.database.db_tables.ProjectTableModel;
+import com.ob.database.db_tables.WorkTypeTableModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
@@ -105,7 +108,7 @@ public class AllocateTask extends CustomTitle {
     public static int nval;
     public static CustomTitle destruct;
 
-    public static final String TAG = "SelectScreen";
+    private static final String TAG = "AllocateTask";
     public static boolean insertFlag = false;
     private String responseData;
     private int selectedClient = 0;
@@ -163,18 +166,7 @@ public class AllocateTask extends CustomTitle {
             return;
         }
 
-        Objects.requireNonNull(viewModel.getLvClientData()).observe(
-                this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
-                    //viewModel.getClientProjectWorkType(db.userId, "maker");
-                    if (value!=0){
-                        setRFIData();
-                    }else {
-                        updateData();
-                        //viewModel.getClientProjectWorkType(db.userId, "maker");
-                    }
-                }
-        );
+        observerData();
 
         /*if (!db.userId.equalsIgnoreCase("")) {
             if (isDataAvialable("Client")) {
@@ -313,6 +305,52 @@ public class AllocateTask extends CustomTitle {
 
     }
 
+    private void observerData() {
+
+        Objects.requireNonNull(viewModel.getLvClientData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
+
+                    if (value!=0){
+                        setRFIData();
+                    }else {
+                        //updateData();
+                        viewModel.getClientProjectWorkType(31, "Maker");
+                    }
+                }
+        );
+
+        Objects.requireNonNull(viewModel.getLvProjectData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvProjectData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: setSchemeSpinnerData");
+                        setSchemeSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getProjectApi ");
+                        viewModel.getProjectApi(31, "Maker");
+                    }
+                }
+        );
+
+        Objects.requireNonNull(viewModel.getLvWorkTypeData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvWorkTypeData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: getLvWorkTypeData");
+                        setWorkTypeSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvWorkTypeData ");
+                        viewModel.getWorkTypeSequenceApi(31, "Maker");
+                    }
+                }
+        );
+    }
+
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -444,6 +482,7 @@ public class AllocateTask extends CustomTitle {
             id = "0";
         }
 
+        cursor.close();
         nval = Integer.parseInt(id);
         nval = nval + 1;
 
@@ -482,7 +521,8 @@ public class AllocateTask extends CustomTitle {
     private void setClientData() {
 
         insertFlag = false;
-        String where = "user_id='" + db.userId + "'";
+
+        /*String where = "user_id='" + db.userId + "'";
 
         // Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT
 
@@ -512,6 +552,15 @@ public class AllocateTask extends CustomTitle {
 
             cursor.close();
         }
+*/
+        ArrayList<ClientTableModel> list = viewModel.getList();
+        int size = list.size();
+        clientId = new String[size];
+        client = new String[size];
+        for(int i =0; i<size; i++){
+            client[i] = list.get(i).getClnt_Name();
+            clientId[i] = list.get(i).getClient_ID();
+        }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, client);
@@ -526,30 +575,18 @@ public class AllocateTask extends CustomTitle {
                                        int position, long rowid) {
                 System.out.println("position" + position);
                 if (position >= 1) {
-
                     db.selectedclientname = clintSpin.getSelectedItem()
                             .toString();
-                    System.out.println("client selected not present");
-                    db.selectedClientId = clientId[position - 1];
-
-                    setSchemeSpinnerData(clientId[position - 1]);
-                    worktypeSpin.setSelection(0);
-                    worktypeSpin.setClickable(false);
-                    projSpin.setSelection(1);//changed by pramod
-                    projSpin.setClickable(true);
-
-                    // db.selectedClient = client[position];
-
-                } else {
+                    db.selectedClientId = clientId[position];
+                    viewModel.getProjectDataFromDB();
+                }else {
                     worktypeSpin.setSelection(0);
                     worktypeSpin.setClickable(false);
                     projSpin.setSelection(1);//changed by pramod
                     projSpin.setClickable(false);
-
                     db.selectedClientId = "";
                     db.selectedclientname = clintSpin.getSelectedItem()
                             .toString();
-
                 }
             }
 
@@ -558,35 +595,18 @@ public class AllocateTask extends CustomTitle {
         });
     }
 
-    private void setSchemeSpinnerData(String Cl_ID) {
+    private void setSchemeSpinnerData() {
 
-        String where = "s.Scheme_Cl_Id = c.Client_ID AND s.Scheme_Cl_Id='"
-                + db.selectedClientId + "' AND s.user_id='" + db.userId + "'";
-        Cursor cursor = db.select("Scheme as s, Client as c",
-                "distinct(s.PK_Scheme_ID), s.Scheme_Name,s.scrolling_status",
-                where, null, null, null, null);
-
-        schemId = new String[cursor.getCount()];
-        scroll_status = new String[cursor.getCount()];
-        String[] items = new String[cursor.getCount() + 1];
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-
-            do {
-                schemId[cursor.getPosition()] = cursor.getString(0);
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-                scroll_status[cursor.getPosition()] = cursor.getString(2);
-
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "Scheme(s) not available";
+        ArrayList<ProjectTableModel> list = viewModel.getListOfProject();
+        int size = list.size();
+        String[] items = new String[size];
+        schemId = new String[size];
+        scroll_status = new String[size];
+        for(int i =0; i<size; i++){
+            schemId[i] = list.get(i).getPK_Scheme_ID();
+            items[i] = list.get(i).getScheme_Name();
+            scroll_status[i] = list.get(i).getScrolling_status();
         }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
-        }
-        final String where1 = "FK_WorkTyp_ID ='" + "1" + "' AND user_id='"
-                + db.userId + "'";
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, items);
@@ -598,27 +618,13 @@ public class AllocateTask extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedSchemeId = schemId[position - 1];
-                    db.selectedScrollStatus = scroll_status[position - 1];
-                    // setBulidngSpinnerData(schemId[position - 1]);
-                    setWorkTypeSpinnerData(schemId[position - 1]);
+                    db.selectedSchemeId = schemId[position];
+                    db.selectedScrollStatus = scroll_status[position];
                     worktypeSpin.setClickable(true);
-
                     db.selectedSchemeName = projSpin.getSelectedItem()
                             .toString();
-                    System.out.println("heloooooooo===="
-                            + db.selectedSchemeName);
-                    /***** AKSHAY *****/
-                    /*
-                     * setCheckListSpinnerData();
-                     * structureSpin.setClickable(true);
-                     * structureSpin.setSelection(0);
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     * worktypeSpin.setSelection(0);
-                     * worktypeSpin.setClickable(true);
-                     *//***** AKSHAY *****/
-
+                    viewModel.getWorkTypeFromDB();
+                    //setWorkTypeSpinnerData();
                 } else {
                     db.selectedSchemeId = "";
                     db.selectedScrollStatus = "";
@@ -640,34 +646,19 @@ public class AllocateTask extends CustomTitle {
         });
     }
 
-    private void setWorkTypeSpinnerData(final String schemId2) {
+    private void setWorkTypeSpinnerData() {
         /* FK_PRJ_Id */
 
-        String where = "user_id='" + db.userId + "' AND FK_PRJ_Id='"
-                + db.selectedSchemeId + "'";
+        ArrayList<WorkTypeTableModel> list = viewModel.getListOfWorkType();
+        int size = list.size();
+        wTypeId = new String[size];
+        wTypeLevelId = new String[size];
+        String[] items = new String[size];
 
-        Cursor cursor = db.select("WorkType",
-                "distinct(WorkTyp_ID),WorkTyp_Name,WorkTyp_level", where, null,
-                null, null, null);
-
-        System.out.println("in workype...............");
-        wTypeId = new String[cursor.getCount()];
-        wTypeLevelId = new String[cursor.getCount()];
-        String[] items = new String[cursor.getCount() + 1];
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-
-            do {
-                wTypeId[cursor.getPosition()] = cursor.getString(0);
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-                wTypeLevelId[cursor.getPosition()] = cursor.getString(2);
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "WorkType(s) not available";
-        }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
+        for(int i =0; i<size; i++){
+            wTypeId[i] = String.valueOf(list.get(i).getWorkTypeId());
+            items[i] = list.get(i).getActivitySequenceName();
+            wTypeLevelId[i] = String.valueOf(list.get(i).getActivitySequenceLevel());
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -681,102 +672,13 @@ public class AllocateTask extends CustomTitle {
                                        int position, long rowid)
             {
                 if (position > 0) {
-                    db.selectedWorkTypeId = wTypeId[position - 1];
-                    System.out
-                            .println("***** Inside workTypeSpin.onItemSelectedListener *****");
-                    // db.selectedSchemeName=projSpin.getSelectedItem().toString();
-                    System.out.println("db.selectedWorkTypeId : "
-                            + db.selectedWorkTypeId);
-                    // System.out.println("heloooooooo  worktype level id===="+wTypeLevelId[position
-                    // - 1]);
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 24-APRIL-2015
-                    // setCheckListSpinnerData();
-                    db.selectedlevelId = wTypeLevelId[position - 1];
-                    System.out.println("db.selectedlevelId : "
-                            + db.selectedlevelId);
-                    if (isDataAvialableForID("Building", "FK_WorkTyp_ID",
-                            db.selectedWorkTypeId)) {
-                        System.out
-                                .println("Data already present in Building Table");
-                        if (Integer.parseInt(db.selectedlevelId) >= 1) {
-                            System.out
-                                    .println("Setting Building Spinner Data.....SchemeID2 : "
-                                            + schemId2);
-                            System.out
-                                    .println("Calling setBuildingSpinnerData by passing schemeid as : "
-                                            + schemId2);
-                            setBulidngSpinnerData(schemId2);
-
-//                            method = "getCheckList";
-//                            param = new String[]{"userID", "userRole", "workTypeId",
-//                            };
-//                            value = new String[]{db.userId, "maker",
-//                                    db.selectedWorkTypeId};
-//                            callCheckListService();
-                            structureSpin.setClickable(true);
-                            structureSpin.setSelection(0);
-                        }
-
-                    }
-                    else
-                    {
-                        System.out.println("Data not present in Building Table");
-                        method = "getStructure";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId, "0" };
-
-//                        method = "getCheckList";
-//                        param = new String[]{"userID", "userRole", "workTypeId",
-//                        };
-//                        value = new String[]{db.userId, "maker",
-//                                db.selectedWorkTypeId};
-//                        callCheckListService();
-                        callStructureService();
-                    }
-                    System.out.println("SelectedLevelID : "
-                            + db.selectedlevelId);
-                    System.out.println("SelectedWorkTypeID : "
-                            + db.selectedWorkTypeId);
-                    System.out.println("SelectedSchemeID : "
-                            + db.selectedSchemeId);
-                    /***** AKSHAY *****/
-                    /*
-                     * if(Integer.parseInt(db.selectedlevelId)>=1) {
-                     * System.out.println
-                     * ("Setting Building Spinner Data.....SchemeID2 : " +
-                     * schemId2); System.out.println(
-                     * "Calling setBuildingSpinnerData by passing schemeid as : "
-                     * + schemId2); setBulidngSpinnerData(schemId2); }
-                     *
-                     *
-                     *
-                     *
-                     * structureSpin.setClickable(true);
-                     * structureSpin.setSelection(0);
-                     */
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 24-APRIL-2015
-                    /*
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     */
-                    /***** AKSHAY *****/
-
+                    db.selectedWorkTypeId = wTypeId[position];
+                    db.selectedlevelId = wTypeLevelId[position];
                 } else {
                     db.selectedWorkTypeId = "";
                     db.selectedBuildingId = "";
-                    //	db.selectedChecklistId = "";
                     db.selectedSubGroupId = "";
                     db.selectedlevelId = "";
-                    ///structureSpin.setClickable(false);
-                    //structureSpin.setSelection(0);
-                    //checklistspin.setClickable(false);
-                    //checklistspin.setSelection(0);
-
                 }
             }
 

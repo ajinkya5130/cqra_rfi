@@ -5,13 +5,11 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "Client")
 data class ClientTableModel (
-
     @PrimaryKey(autoGenerate = true)
-    val _id: Int = 0,
-    val Client_ID: String,
-    val Clnt_Name: String,
-    val CL_Dispaly_Name: String,
-    val Clnt_Adrs: String,
-    val user_id: String,
-
+    var pk_client_id: Int = 0,
+    var Client_ID: String = "",
+    var Clnt_Name: String ="",
+    var CL_Dispaly_Name: String="",
+    var Clnt_Adrs: String="",
+    var user_id: String=""
 )

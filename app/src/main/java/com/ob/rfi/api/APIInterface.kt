@@ -1,24 +1,34 @@
-package com.ob.rfi.api;
+package com.ob.rfi.api
 
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.http.GET;
-import retrofit2.http.Headers;
-import retrofit2.http.Query;
+import com.ob.AppUtil
+import com.ob.rfi.models.ClientApiResponseModel
+import com.ob.rfi.models.ProjectApiResponseModel
+import com.ob.rfi.models.WorkTypeResponseModel
+import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Path
 
-public interface APIInterface {
-   /* @GET("/api/unknown")
-    Call<String> doGetListResources();
+interface APIInterface {
 
-    @POST("/api/users")
-    Call<User> createUser(@Body User user);
-*/
-    @Headers({"Content-Type: application/xml; charset=utf-8"})
-    @GET("getClientProjectWorkType?")
-    Call<ResponseBody> getClientProjectWorkType(@Query("userID") String userId, @Query("userRole") String userRole);
+    @GET("clients_rfi/clientsRfiAndroid/{userID}/{userRole}")
+   suspend fun getClientsAPI(
+        @Path("userID") userId: Int?,
+        @Path("userRole") userRole: String?,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ClientApiResponseModel>
 
-    /*@FormUrlEncoded
-    @POST("/api/users?")
-    Call<UserList> doCreateUserWithField(@Field("name") String name, @Field("job") String job);*/
+    @GET("projects_rfi/getProjectsByUserIdAndRoleAndroid/{userID}/{userRole}")
+   suspend fun getProjectApi(
+        @Path("userID") userId: Int?,
+        @Path("userRole") userRole: String?,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ProjectApiResponseModel>
 
+    @GET("activity_sequence/getActivitySequencesAndroid/{userID}/{userRole}")
+   suspend fun workTypeSequenceApi(
+        @Path("userID") userId: Int?,
+        @Path("userRole") userRole: String?,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<WorkTypeResponseModel>
 }

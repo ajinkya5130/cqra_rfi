@@ -78,6 +78,7 @@
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:hint="Enter Password"
+            android:text="aaaa1"
 
             android:maxLength="15"
             android:password="true"

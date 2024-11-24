@@ -22,7 +22,7 @@ public class RfiDatabase {
 
 	public static String imgUploaded="";
 	public static boolean isUploaded= false;
-	public static final Integer DB_VERSION= 13;
+	public static final Integer DB_VERSION= 1;
 
 
 
@@ -381,32 +381,32 @@ public class RfiDatabase {
 			db.execSQL("CREATE TABLE userMaster(Pk_User_ID INTEGER PRIMARY KEY, User_Name TEXT, Password TEXT,user_role TEXT,dashboardroll TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Client(_id integer primary key AUTOINCREMENT, Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT,Clnt_Adrs TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Client(pk_client_id integer primary key AUTOINCREMENT, Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT,Clnt_Adrs TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE Scheme(PK_Scheme_ID TEXT,Scheme_Name TEXT,Scheme_Cl_Id TEXT,Scheme_Diplay_Name TEXT,Scheme_Adrs TEXT," +
+			db.execSQL("CREATE TABLE Scheme(scheme_id integer primary key AUTOINCREMENT, PK_Scheme_ID TEXT,Scheme_Name TEXT,Scheme_Cl_Id TEXT,Scheme_Diplay_Name TEXT,Scheme_Adrs TEXT," +
 					"Scheme_Region TEXT,scrolling_status TEXT, user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Building(Bldg_ID TEXT,Bldg_Name TEXT,Build_scheme_id TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Building(pk_building_id integer primary key AUTOINCREMENT,Bldg_ID TEXT,Bldg_Name TEXT,Build_scheme_id TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE floor (floor_Id TEXT,floor_Name TEXT,Floor_Scheme_ID TEXT,FK_Bldg_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE floor (pk_floor_id integer primary key AUTOINCREMENT,floor_Id TEXT,floor_Name TEXT,Floor_Scheme_ID TEXT,FK_Bldg_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE Unit(Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id TEXT,Fk_Floor_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Unit(pk_ubit_id integer primary key AUTOINCREMENT,Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id TEXT,Fk_Floor_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE SubUnit(Sub_Unit_ID TEXT,Sub_Unit_Des TEXT,Sub_Unit_Scheme_id TEXT,FK_Unit_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE SubUnit(pk_subunit_id integer primary key AUTOINCREMENT,Sub_Unit_ID TEXT,Sub_Unit_Des TEXT,Sub_Unit_Scheme_id TEXT,FK_Unit_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE Element(Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Element(pk_element_id integer primary key AUTOINCREMENT,Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 		
-			db.execSQL("CREATE TABLE SubElement(Sub_Elmt_ID TEXT,Sub_Elmt_Des TEXT,Sub_Elmt_Scheme_id TEXT,FK_Elmt_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE SubElement(pk_subelement_id integer primary key AUTOINCREMENT,Sub_Elmt_ID TEXT,Sub_Elmt_Des TEXT,Sub_Elmt_Scheme_id TEXT,FK_Elmt_ID TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE CheckList(Checklist_ID TEXT,Checklist_Name TEXT,Node_Id TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE CheckList(pk_checklist_id integer primary key AUTOINCREMENT,Checklist_ID TEXT,Checklist_Name TEXT,Node_Id TEXT,FK_WorkTyp_ID TEXT, user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Group1(Grp_ID TEXT,Grp_Name TEXT,Node_id TEXT,FK_Checklist_ID TEXT,user_id TEXT,GRP_Sequence_tint TEXT)");
+			db.execSQL("CREATE TABLE Group1(pk_group_id integer primary key AUTOINCREMENT,Grp_ID TEXT,Grp_Name TEXT,Node_id TEXT,FK_Checklist_ID TEXT,user_id TEXT,GRP_Sequence_tint TEXT)");
 			
 		 
 			
-			db.execSQL("CREATE TABLE question(PK_question_id TEXT, QUE_Des TEXT, " +
+			db.execSQL("CREATE TABLE question(_id integer primary key AUTOINCREMENT,PK_question_id TEXT, QUE_Des TEXT, " +
 					"QUE_SequenceNo Text,QUE_Type TEXT, NODE_Id TEXT, Fk_CHKL_Id TEXT, Fk_Grp_ID TEXT,user_id TEXT)");
 			
 			 
@@ -422,24 +422,24 @@ public class RfiDatabase {
 			
 			
 			
-			db.execSQL("CREATE TABLE Rfi_New_Create(FK_rfi_Id TEXT,user_id TEXT)");
-			db.execSQL("CREATE TABLE Created_RFI(FK_rfi_Id TEXT,user_id TEXT,coverageText TEXT)");
-			db.execSQL("CREATE TABLE Rfi_update_status(status TEXT DEFAULT 'notcompleted',FK_rfi_Id TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE Rfi_New_Create(_id integer primary key AUTOINCREMENT,FK_rfi_Id TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE Created_RFI(_id integer primary key AUTOINCREMENT,FK_rfi_Id TEXT,user_id TEXT,coverageText TEXT)");
+			db.execSQL("CREATE TABLE Rfi_update_status(_id integer primary key AUTOINCREMENT,status TEXT DEFAULT 'notcompleted',FK_rfi_Id TEXT,user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Images (status TEXT DEFAULT 'notuploaded', fileName TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE Images (_id integer primary key AUTOINCREMENT,status TEXT DEFAULT 'notuploaded', fileName TEXT,user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE Rfi_check(rfi_no TEXT,user_id TEXT)"); 
+			db.execSQL("CREATE TABLE Rfi_check(_id integer primary key AUTOINCREMENT,rfi_no TEXT,user_id TEXT)");
 			
 			
 			 //--------updaterfi
-			db.execSQL("CREATE TABLE Rfi_update_details(RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
+			db.execSQL("CREATE TABLE Rfi_update_details(_id integer primary key AUTOINCREMENT,RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
 					"StructureId TEXT,StageId TEXT,UnitId TEXT,SubUnitId TEXT," +
 					"ElementId TEXT,SubElementId TXT,RFICreatedOn_date TEXT,Coverage TEXT,QUE_Id TEXT,Answer TEXT,Remark TEXT," +
 					"Image1 TEXT,image2 TEXT,Status TEXT,enterByUserId TEXT,detailCreatedOn_date TEXT,CheckedByUserId TEXT,DetailCheckedOn_date TEXT,Rfi_name TEXT,Image3 TEXT,image4 TEXT,checker_remark TEXT,drawing_no TEXT ,EmpytPlace TEXT,status_device TEXT,user_id1 TEXT)" );
 			
 			
-			db.execSQL("CREATE TABLE Check_update_details(RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
+			db.execSQL("CREATE TABLE Check_update_details(_id integer primary key AUTOINCREMENT,RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
 					"StructureId TEXT,StageId TEXT,UnitId TEXT,SubUnitId TEXT," +
 					"ElementId TEXT,SubElementId TXT,RFICreatedOn_date TEXT,Coverage TEXT,QUE_Id TEXT,Answer TEXT,Remark TEXT," +
 					"Image1 TEXT,image2 TEXT,Status TEXT,enterByUserId TEXT,detailCreatedOn_date TEXT,CheckedByUserId TEXT,DetailCheckedOn_date TEXT,Rfi_name TEXT,Image3 TEXT,image4 TEXT,checker_remark TEXT,drawing_no TEXT ,EmpytPlace TEXT,status_device TEXT,user_id1 TEXT)" );
@@ -452,30 +452,30 @@ public class RfiDatabase {
 					"FK_QUE_SequenceNo Text,FK_QUE_Type TEXT, FK_NODE_Id TEXT,Fk_CHKL_Id TEXT, Fk_Grp_ID TEXT,workType_id,check_date TEXT,answerFlag TEXT,user_id TEXT,isAnswered TEXT)");
 			
 			//added on 10-06-2014
-			db.execSQL("CREATE TABLE WorkType(WorkTyp_ID TEXT,WorkTyp_Name TEXT,WorkTyp_level TEXT,FK_PRJ_Id TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE WorkType(_id integer primary key AUTOINCREMENT,WorkTyp_ID TEXT,WorkTyp_Name TEXT,WorkTyp_level TEXT,FK_PRJ_Id TEXT,user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE CheckListWise(ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
+			db.execSQL("CREATE TABLE CheckListWise(_id integer primary key AUTOINCREMENT,ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
 					"CheckListId TEXT,CheckListName TEXT,PendingRFICount TEXT,CompleteRFICount TEXT,TotalRFICount TEXT,user_id TEXT)");
 			
 			
 			
-			db.execSQL("CREATE TABLE MakerWise(ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
+			db.execSQL("CREATE TABLE MakerWise(_id integer primary key AUTOINCREMENT,ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
 					"MakerUserId TEXT,MakerUserName TEXT,TotalRFICount TEXT,user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE CheckerWise(ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
+			db.execSQL("CREATE TABLE CheckerWise(_id integer primary key AUTOINCREMENT,ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
 					"CheckerUserId TEXT,CheckerUserName TEXT,TotalRFICount TEXT,user_id TEXT)");
 			
 			 
 			 
-			db.execSQL("CREATE TABLE ApproverWise(ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName" +
+			db.execSQL("CREATE TABLE ApproverWise(_id integer primary key AUTOINCREMENT,ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName" +
 					" TEXT,ApproverUserId TEXT,ApproverUserName TEXT,TotalRFICount TEXT,user_id TEXT)");
 			
-			db.execSQL("CREATE TABLE ContractorWise(ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
+			db.execSQL("CREATE TABLE ContractorWise(_id integer primary key AUTOINCREMENT,ClientId TEXT,ClientName TEXT,ProjectId TEXT,ProjectName TEXT,StructureId TEXT,StructureName TEXT," +
 					"RepresentingId TEXT,Representingname TEXT,MakeRFICount TEXT,CheckedRFICount TEXT,ApprovedRFICount TEXT,user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE CancelRFI(RFI_ID TEXT,Remark TEXT,User_ID TEXT)");
+			db.execSQL("CREATE TABLE CancelRFI(_id integer primary key AUTOINCREMENT,RFI_ID TEXT,Remark TEXT,User_ID TEXT)");
 			
 			db.execSQL("CREATE TABLE AllocateTask(Client TEXT,Project TEXT,WorkType TEXT,Structure TEXT,Stage TEXT,Unit TEXT,SubUnit TEXT,Element TEXT," +
 					"SubElement TEXT,CheckList TEXT,GroupColumn TEXT,UserID TEXT,NodeID TEXT)");
@@ -484,9 +484,12 @@ public class RfiDatabase {
 			db.execSQL("CREATE TABLE RfiNotification (notifId INTEGER PRIMARY KEY AUTOINCREMENT, notifText TEXT,user_id TEXT)");
 
 
-			db.execSQL("CREATE TABLE ApproverDetails(RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
+			db.execSQL("CREATE TABLE ApproverDetails(_id integer primary key AUTOINCREMENT,RFI_Id TEXT,CL_Id TEXT,PRJ_Id TEXT,NODE_Id TEXT,Level_int TEXT,Fk_WorkTyp_ID TEXT,CHKL_Id TEXT,GRP_Id TEXT,USER_Id TEXT," +
 					"StructureId TEXT,StageId TEXT,UnitId TEXT,SubUnitId TEXT," +
 					"ElementId TEXT,SubElementId TXT,RFICreatedOn_date TEXT,Coverage TEXT,Rfi_name TEXT,drawing_no TEXT,Remark TEXT,Answer TEXT,user_id1 TEXT)" );
+
+			db.execSQL("CREATE TABLE WorkTypeSeq (workTypeId integer PRIMARY KEY AUTOINCREMENT, activitySequenceGroupId INTEGER NOT NULL, projectId INTEGER NOT NULL, activitySequenceLevel INTEGER NOT NULL," +
+					"activitySequenceStatus INTEGER NOT NULL, activitySequenceName TEXT NOT NULL)");
 
 
 		/*	
