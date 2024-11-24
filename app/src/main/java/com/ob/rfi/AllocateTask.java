@@ -23,7 +23,9 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
@@ -32,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 @SuppressWarnings("static-access")
 public class AllocateTask extends CustomTitle {
@@ -110,6 +113,8 @@ public class AllocateTask extends CustomTitle {
     ArrayList<Group> groupList;
     private boolean isCoverageSpinner = false;
     private boolean isCoverageTextViewNew = false;
+    private AllocateTaskViewModel viewModel;
+
 
     @Override
     protected Dialog onCreateDialog(int id) {
@@ -148,16 +153,30 @@ public class AllocateTask extends CustomTitle {
 
         ResetId();
         setSpiner();
-
+        viewModel = new ViewModelProvider(this).get(AllocateTaskViewModel.class);
+        //RFIRoomDb dbObject = RoomDbObject.INSTANCE.getDbObject(this);
+        viewModel.getClientData();
 
         db = new RfiDatabase(getApplicationContext());
         if (db.userId.equalsIgnoreCase("")) {
             logout();
-        } else {
-            // setSchemeSpinnerData();
+            return;
         }
 
-        if (!db.userId.equalsIgnoreCase("")) {
+        Objects.requireNonNull(viewModel.getLvClientData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
+                    //viewModel.getClientProjectWorkType(db.userId, "maker");
+                    if (value!=0){
+                        setRFIData();
+                    }else {
+                        updateData();
+                        //viewModel.getClientProjectWorkType(db.userId, "maker");
+                    }
+                }
+        );
+
+        /*if (!db.userId.equalsIgnoreCase("")) {
             if (isDataAvialable("Client")) {
                 setRFIData();
                 // setClientData();
@@ -167,7 +186,7 @@ public class AllocateTask extends CustomTitle {
             // disableList(false);
         } else {
             logout();
-        }
+        }*/
 
         okBtn.setOnClickListener(new OnClickListener() {
             private SharedPreferences checkPreferences;
@@ -428,10 +447,10 @@ public class AllocateTask extends CustomTitle {
         nval = Integer.parseInt(id);
         nval = nval + 1;
 
-        String value = String.valueOf(nval);
+       /* String value = String.valueOf(nval);
         final String[] items = new String[2];
         items[0] = "--select--";
-        items[1] = "create new" + value;
+        items[1] = "create new" + value;*/
 
         setClientData();
 
@@ -1839,7 +1858,7 @@ public class AllocateTask extends CustomTitle {
                 // if(requestid == 1)
 
                 responseData = data;
-                System.out.println("success data");
+                System.out.println("success data: "+responseData);
                 saveData(data);
 
             }
@@ -2672,118 +2691,7 @@ public class AllocateTask extends CustomTitle {
                     db.insert("WorkType", column, values);
                     System.out.println("Row inserted in WorkType Table");
                 }
-
-                /***** AKSHAY *****/
-                /*
-                 * System.out.println("data========="+tabledata.toString());
-                 *
-                 * String column =
-                 * "Client_ID,Clnt_Name,CL_Dispaly_Name,Clnt_Adrs,user_id"
-                 * ;//project saveToDatabase("Client", column,
-                 * tabledata[0],true,4);
-                 */
-
-                /***** AKSHAY *****/
-                /*
-                 * column =
-                 * "PK_Scheme_ID,Scheme_Name,Scheme_Cl_Id,Scheme_Diplay_Name,Scheme_Adrs,Scheme_Region,scrolling_status,user_id"
-                 * ; saveToDatabase("Scheme", column, tabledata[1],true,7);
-                 * System
-                 * .out.println("table 1========"+tabledata[1].toString());
-                 *
-                 * column =
-                 * "WorkTyp_ID,WorkTyp_Name,WorkTyp_level,FK_PRJ_Id,user_id"
-                 * ;//worktype saveToDatabase("WorkType", column,
-                 * tabledata[2],true,4);
-                 *
-                 *
-                 *
-                 * column =
-                 * "Bldg_ID,Bldg_Name,Build_scheme_id,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("Building", column,
-                 * tabledata[3],true,4);
-                 *
-                 *
-                 * column =
-                 * "floor_Id,floor_Name,Floor_Scheme_ID,FK_Bldg_ID,FK_WorkTyp_ID, user_id"
-                 * ;//buildng saveToDatabase("floor", column,
-                 * tabledata[4],true,5);
-                 *
-                 *
-                 *
-                 *
-                 *
-                 * //Unit(Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id
-                 * TEXT,Fk_Floor_ID TEXT, user_id TEXT)") column =
-                 * "Unit_ID,Unit_Des,Unit_Scheme_id,Fk_Floor_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("Unit", column,
-                 * tabledata[5],true,5);
-                 *
-                 *
-                 *
-                 * column =
-                 * "Sub_Unit_ID,Sub_Unit_Des,Sub_Unit_Scheme_id,FK_Unit_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("SubUnit", column,
-                 * tabledata[6],true,5);
-                 *
-                 *
-                 * column =
-                 * "Elmt_ID,Elmt_Des,Elmt_Scheme_id,FK_Sub_Unit_ID,FK_WorkTyp_ID, user_id"
-                 * ;//buildng saveToDatabase("Element", column,
-                 * tabledata[7],true,5);
-                 *
-                 *
-                 * column =
-                 * "Sub_Elmt_ID,Sub_Elmt_Des,Sub_Elmt_Scheme_id,FK_Elmt_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("SubElement", column,
-                 * tabledata[8],true,5);
-                 *
-                 *
-                 *
-                 *
-                 *
-                 * column =
-                 * "Checklist_ID,Checklist_Name,Node_Id,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("CheckList", column,
-                 * tabledata[9],true,4);
-                 *
-                 * column =
-                 * "Grp_ID,Grp_Name,Node_id,FK_Checklist_ID, user_id";//buildng
-                 * saveToDatabase("Group1", column, tabledata[10],true,4);
-                 *
-                 *
-                 *
-                 * column =
-                 * "PK_question_id,QUE_Des,QUE_SequenceNo,QUE_Type, NODE_Id, Fk_CHKL_Id, Fk_Grp_ID,user_id"
-                 * ;//buildng saveToDatabase("question", column,
-                 * tabledata[11],true,7);
-                 */
-
-                /***** AKSHAY *****/
-
-                /***** AKSHAY *****/
-                // Change Made on 24-April-2015
-                /* System.out.println("client data=========="+column.length()); */
-
-                /*
-                 * column = "q_type_id,q_type_text,q_type_desc, user_id";
-                 * saveToDatabase("question_type", column, tabledata[7],true,4);
-                 *
-                 * column =
-                 * "severity_id,mild,moderate,severe,very_severe,exstream, user_id"
-                 * ; saveToDatabase("severity", column, tabledata[8],true,7);
-                 */
-
-                /*
-                 * String tempdata="0~Other"; column =
-                 * "q_heading_id,q_heading_text, user_id";
-                 * saveToDatabase("question_heading", column, tempdata,true,3);
-                 */
-
-                // setSchemeSpinnerData();
-
                 setRFIData();
-                // setClientData();
             } catch (Exception e) {
                 Log.d(TAG, e.toString());
                 e.printStackTrace();

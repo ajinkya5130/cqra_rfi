@@ -98,39 +98,6 @@ public class DashBoardSelection extends CustomTitle{
 			}
 		});
 		
-		
-		
-		
-		/*//setting current date to textview
-		textFromdate.setText(day+"/"+month+"/"+year);
-		textTodate.setText(day+"/"+month+"/"+year);
-		
-		
-		textFromdate.setOnClickListener(new OnClickListener() {
-			 
-            @Override
-            public void onClick(View v) {
-                 
-                // On button click show datepicker dialog
-                showDialog(DATE_PICKER_ID);
- 
-            } 
- 
-        });
-		textTodate.setOnClickListener(new OnClickListener() {
-			 
-            @Override
-            public void onClick(View v) {
-                 
-                // On button click show datepicker dialog
-                showDialog(DATE_PICKER_ID1);
- 
-            } 
- 
-        });
-		
-		*/
-		
 		if(isDataAvialable("CheckListWise"))
 		{
 			
@@ -222,14 +189,6 @@ public class DashBoardSelection extends CustomTitle{
 			method = "getDashboard";
 			/*param = new String[] { "userID","userRole" };
 			value = new String[] { db.userId,"maker" };*/
-			callService();
-		}
-	 
-	 public void updateProjectData() {
-			requestid = 1;
-			method = "getDetails";
-			param = new String[] { "userID","userRole" };
-			value = new String[] { db.userId,"maker" };
 			callService();
 		}
 	 
@@ -343,12 +302,7 @@ public class DashBoardSelection extends CustomTitle{
 				}
 			}
 		} 
-	 
-	 
-	 
-	 
-	 
-	 
+
 	 public void saveToDatabase(String table, String columns, String respose, boolean adduserId, int colCnt) {
 			Cursor cursor = db.select(table, columns, "user_id='"+db.userId+"'", null, null, null, null);
 			String existingData = "";

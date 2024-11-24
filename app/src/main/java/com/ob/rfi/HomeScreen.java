@@ -171,7 +171,6 @@ public class HomeScreen extends CustomTitle {
         } catch (Exception e) {
             System.out.println("error=" + e.getMessage());
         }
-        viewModel.getData(rollval,db.userId);
         allocateTask.setOnClickListener(new OnClickListener() {
 
             @Override

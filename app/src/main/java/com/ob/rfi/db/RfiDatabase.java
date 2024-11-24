@@ -22,6 +22,7 @@ public class RfiDatabase {
 
 	public static String imgUploaded="";
 	public static boolean isUploaded= false;
+	public static final Integer DB_VERSION= 13;
 
 
 
@@ -371,7 +372,7 @@ public class RfiDatabase {
 	private static class openHelper extends SQLiteOpenHelper {
 
 		public openHelper(Context context) {
-			super(context, "RFI.db", null, 13);
+			super(context, "RFI.db", null, DB_VERSION);
 		}
 
 		@Override
@@ -380,7 +381,7 @@ public class RfiDatabase {
 			db.execSQL("CREATE TABLE userMaster(Pk_User_ID INTEGER PRIMARY KEY, User_Name TEXT, Password TEXT,user_role TEXT,dashboardroll TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Client(Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT,Clnt_Adrs TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Client(_id integer primary key AUTOINCREMENT, Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT,Clnt_Adrs TEXT, user_id TEXT)");
 			
 			db.execSQL("CREATE TABLE Scheme(PK_Scheme_ID TEXT,Scheme_Name TEXT,Scheme_Cl_Id TEXT,Scheme_Diplay_Name TEXT,Scheme_Adrs TEXT," +
 					"Scheme_Region TEXT,scrolling_status TEXT, user_id TEXT)");
@@ -423,10 +424,10 @@ public class RfiDatabase {
 			
 			db.execSQL("CREATE TABLE Rfi_New_Create(FK_rfi_Id TEXT,user_id TEXT)");
 			db.execSQL("CREATE TABLE Created_RFI(FK_rfi_Id TEXT,user_id TEXT,coverageText TEXT)");
-			db.execSQL("CREATE TABLE Rfi_update_status(status TEXT DEFAULT notcompleted,FK_rfi_Id TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE Rfi_update_status(status TEXT DEFAULT 'notcompleted',FK_rfi_Id TEXT,user_id TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Images (status TEXT DEFAULT notuploaded, fileName TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE Images (status TEXT DEFAULT 'notuploaded', fileName TEXT,user_id TEXT)");
 			
 			db.execSQL("CREATE TABLE Rfi_check(rfi_no TEXT,user_id TEXT)"); 
 			
@@ -532,7 +533,16 @@ public class RfiDatabase {
 			db.execSQL("DROP TABLE IF EXISTS " + "RfiNotification");
 
 			//db.delete("Answer", null, null);
-			onCreate(db);
+
+            /*try {
+                if (oldVersion < 14 && newVersion >= 14) {
+                    db.execSQL("alter table " + "Client" + " add column " + "_id" + " integer primary key NOT NULL;");
+					Log.i("RFI_DB", "onUpgrade: oldVersion: "+oldVersion+" newVersion: "+newVersion);
+                }
+            } catch (SQLException e) {
+				Log.e("RFI_DB", "onUpgrade: SQLException: ",e );
+            }*/
+            onCreate(db);
 		}
 	}
 

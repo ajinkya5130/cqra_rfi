@@ -1,7 +1,9 @@
 package com.ob.rfi.api;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
 public interface APIInterface {
@@ -11,8 +13,9 @@ public interface APIInterface {
     @POST("/api/users")
     Call<User> createUser(@Body User user);
 */
+    @Headers({"Content-Type: application/xml; charset=utf-8"})
     @GET("getClientProjectWorkType?")
-    Call<String> getClientProjectWorkType(@Query("userID") String userId,@Query("userRole") String userRole);
+    Call<ResponseBody> getClientProjectWorkType(@Query("userID") String userId, @Query("userRole") String userRole);
 
     /*@FormUrlEncoded
     @POST("/api/users?")
