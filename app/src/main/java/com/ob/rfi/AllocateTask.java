@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
 import com.ob.database.db_tables.ClientTableModel;
 import com.ob.database.db_tables.ProjectTableModel;
+import com.ob.database.db_tables.StructureTableModel;
 import com.ob.database.db_tables.WorkTypeTableModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
@@ -349,6 +350,21 @@ public class AllocateTask extends CustomTitle {
                     }
                 }
         );
+
+        Objects.requireNonNull(viewModel.getLvStructureData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvWorkTypeData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: getLvWorkTypeData");
+                        setBuildingSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvWorkTypeData ");
+                        viewModel.getStructureApi(31, "Maker");
+                    }
+                }
+        );
     }
 
 
@@ -656,7 +672,7 @@ public class AllocateTask extends CustomTitle {
         String[] items = new String[size];
 
         for(int i =0; i<size; i++){
-            wTypeId[i] = String.valueOf(list.get(i).getWorkTypeId());
+            wTypeId[i] = String.valueOf(list.get(i).getActivitySequenceGroupId());
             items[i] = list.get(i).getActivitySequenceName();
             wTypeLevelId[i] = String.valueOf(list.get(i).getActivitySequenceLevel());
         }
@@ -674,6 +690,7 @@ public class AllocateTask extends CustomTitle {
                 if (position > 0) {
                     db.selectedWorkTypeId = wTypeId[position];
                     db.selectedlevelId = wTypeLevelId[position];
+                    viewModel.getStructureDataFromDB();
                 } else {
                     db.selectedWorkTypeId = "";
                     db.selectedBuildingId = "";
@@ -687,48 +704,21 @@ public class AllocateTask extends CustomTitle {
         });
     }
 
-    private void setBulidngSpinnerData(final String schemeid) {
+    private void setBuildingSpinnerData() {
 
         // Building(Bldg_ID TEXT,Bldg_Name TEXT,Build_scheme_id TEXT, user_id
         // TEXT)");
 
-        String where = "b.Build_scheme_id = s.PK_Scheme_ID AND b.Build_scheme_id='"
-                + schemeid
-                + "'"
-                + "AND b.FK_WorkTyp_ID='"
-                + db.selectedWorkTypeId
-                + "' AND s.user_id='"
-                + db.userId
-                + "' AND b.user_id='" + db.userId + "'";
+        ArrayList<StructureTableModel> list = viewModel.getListOfStructure();
+        int size = list.size();
+        String[] items = new String[size];
+        bldgId = new String[size];
 
-        Cursor cursor = db.select("Building as b, Scheme as s",
-                " distinct(b.Bldg_ID), b.Bldg_Name", where, null, null, null,
-                null);
-        System.out.println("Count of Cursor in Building Table is : "
-                + cursor.getCount());
-        bldgId = new String[cursor.getCount()];
-        String[] items = new String[cursor.getCount() + 1];
 
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-            do {
-                bldgId[cursor.getPosition()] = cursor.getString(0);
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "Building(s) not available";
+        for(int i =0; i<size; i++){
+            bldgId[i] = list.get(i).getBldg_ID();
+            items[i] = list.get(i).getBldg_Name();
         }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
-        }
-
-        // ----------checking worktype id--------------
-
-        final String where1 = "FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-                + "' AND user_id='" + db.userId + "'";
-        final String table = "floor";
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, items);
@@ -739,9 +729,10 @@ public class AllocateTask extends CustomTitle {
             public void onItemSelected(AdapterView<?> arg0, View arg1,
                                        int position, long arg3) {
                 if (position > 0) {
-                    db.selectedBuildingId = bldgId[position - 1];
-                    db.selectedNodeId = bldgId[position - 1];
-                    // setFloorSpinnerData(bldgId[position - 1],schemeid);
+                    db.selectedBuildingId = bldgId[position];
+                    db.selectedNodeId = bldgId[position];
+
+                    /*
                     if (isDataAvialableForID("floor", "FK_Bldg_ID",
                             db.selectedBuildingId)) {
                         setFloorSpinnerData(bldgId[position - 1], schemeid);
@@ -755,44 +746,7 @@ public class AllocateTask extends CustomTitle {
                                 db.selectedSchemeId, db.selectedWorkTypeId,
                                 db.selectedBuildingId};
                         callStageService();
-
-
-//						method = "getStage";
-//						param = new String[]{"userID", "userRole",
-//								"projectId", "workTypeId", "parentId",
-//								"checkListId", "groupId"};
-//						value = new String[]{db.userId, "maker",
-//								db.selectedSchemeId, db.selectedWorkTypeId,
-//								db.selectedBuildingId, db.selectedChecklistId,
-//								db.selectedGroupId};
-//						callStageService();
-
-
-                    }
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 29 APRIL 2015
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     *
-                     * System.out.println("selecteed bdg id" +
-                     * db.selectedBuildingId);
-                     *
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=2) {
-                     * setFloorSpinnerData(bldgId[position - 1],schemeid);
-                     * stageSpin.setClickable(true); stageSpin.setSelection(0);
-                     *
-                     *
-                     * }
-                     */
-
+                    }*/
                 }
                 else {
                     stageSpin.setClickable(false);
@@ -805,18 +759,8 @@ public class AllocateTask extends CustomTitle {
                     elementspin.setSelection(0);
                     subelementspin.setClickable(false);
                     subelementspin.setSelection(0);
-                    ////checklistspin.setClickable(false);
-                    //checklistspin.setSelection(0);
-
-                    /*
-                     * // checklistspin.setClickable(false); //
-                     * checklistspin.setSelection(0);
-                     * grouptspin.setClickable(false);
-                     * grouptspin.setSelection(0);
-                     */
 
                     db.selectedBuildingId = "";
-                    //	db.selectedChecklistId = "";
                     db.selectedSubGroupId = "";
                     db.selectedFloorId = "";
                     db.selectedUnitId = "";
@@ -1835,7 +1779,7 @@ public class AllocateTask extends CustomTitle {
                             + fk_worktype_id + "','" + db.userId + "'";
                     db.insert("Building", column, values);
                 }
-                setBulidngSpinnerData(db.selectedSchemeId);
+                //setBulidngSpinnerData(db.selectedSchemeId);
                 structureSpin.setClickable(true);
                 structureSpin.setSelection(0);
 

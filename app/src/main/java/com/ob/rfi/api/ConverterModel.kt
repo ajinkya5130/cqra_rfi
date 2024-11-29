@@ -2,9 +2,11 @@ package com.ob.rfi.api
 
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.models.ClientApiResponseModelItem
 import com.ob.rfi.models.Project
+import com.ob.rfi.models.StructureResponseModelItem
 import com.ob.rfi.models.WorkTypeResponseModelItem
 
 object ConverterModel {
@@ -42,6 +44,20 @@ object ConverterModel {
                 activitySequenceName = model.activitySequenceName
                 activitySequenceStatus = model.activitySequenceStatus
                 projectId = model.prjId
+            })
+        }
+        return list
+    }
+
+    fun convertStructureModel(listOfStructure: ArrayList<StructureResponseModelItem>): List<StructureTableModel> {
+        val list = ArrayList<StructureTableModel>()
+        listOfStructure.forEach { model ->
+            list.add(StructureTableModel().apply{
+                pk_building_id  = model.structureId
+                Bldg_ID = model.structureId.toString()
+                Bldg_Name = model.structureName
+                Build_scheme_id = model.projectId.toString()
+                FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
             })
         }
         return list

@@ -6,15 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ob.database.dao.ClientDao
 import com.ob.database.dao.ProjectDao
+import com.ob.database.dao.StructureDao
 import com.ob.database.dao.WorkTypeDao
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 
 
 @Database(entities = [ClientTableModel::class,
     ProjectTableModel::class,
-    WorkTypeTableModel::class],
+    WorkTypeTableModel::class,
+    StructureTableModel::class,
+                     ],
     version = 1,
     exportSchema = true/*,
     autoMigrations = [
@@ -24,6 +28,7 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun clientDao(): ClientDao
     abstract fun projectDao(): ProjectDao
     abstract fun workTypeDao(): WorkTypeDao
+    abstract fun structureDao(): StructureDao
 
     companion object {
         @Volatile

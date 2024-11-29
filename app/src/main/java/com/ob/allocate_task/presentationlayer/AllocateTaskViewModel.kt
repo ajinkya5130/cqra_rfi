@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.CustomTitle
 import com.ob.rfi.api.APIClient
@@ -26,14 +27,19 @@ class AllocateTaskViewModel : ViewModel() {
     var lvWorkTypeData: LiveData<Int>
     private val _lvWorkTypeData = MutableLiveData<Int>()
 
+    var lvStructureData: LiveData<Int>
+    private val _lvStructureData = MutableLiveData<Int>()
+
     var list = ArrayList<ClientTableModel>()
     var listOfProject = ArrayList<ProjectTableModel>()
     var listOfWorkType = ArrayList<WorkTypeTableModel>()
+    var listOfStructure = ArrayList<StructureTableModel>()
 
     init {
         lvClientData = _lvClientData
         lvProjectData = _lvProjectData
         lvWorkTypeData = _lvWorkTypeData
+        lvStructureData = _lvStructureData
     }
 
     companion object {
@@ -70,7 +76,7 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
-    fun getClientProjectWorkType(rollName: Int, userRole: String?) {
+    fun getClientProjectWorkType(rollName: Int, userRole: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val response = APIClient.getAPIInterface().getClientsAPI(
                 rollName,
@@ -92,7 +98,21 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
-    fun getProjectApi(rollName: Int, userRole: String?) {
+
+    fun getStructureDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            listOfStructure =
+                CustomTitle.rfiDB.structureDao().getAllStructure(RfiDatabase.selectedSchemeId,RfiDatabase.selectedWorkTypeId) as ArrayList<StructureTableModel>
+            if (listOfStructure.size != 0) {
+                listOfStructure.add(0, StructureTableModel(-1, Bldg_Name = "Select Structure"))
+            }
+            val count = listOfStructure.size
+            Log.d(TAG, "listOfStructure: count: $count ")
+            _lvStructureData.postValue(count)
+        }
+    }
+
+    fun getProjectApi(rollName: Int, userRole: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val response = APIClient.getAPIInterface().getProjectApi(
                 rollName,
@@ -114,7 +134,7 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
-    fun getWorkTypeSequenceApi(rollName: Int, userRole: String?) {
+    fun getWorkTypeSequenceApi(rollName: Int, userRole: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val response = APIClient.getAPIInterface().workTypeSequenceApi(
                 rollName,
@@ -135,6 +155,35 @@ class AllocateTaskViewModel : ViewModel() {
 
             } else {
                 Log.e(TAG, "getClientProjectWorkType: response: ${response.errorBody()}")
+            }
+
+        }
+    }
+
+    fun getStructureApi(rollName: Int, userRole: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = APIClient.getAPIInterface().getStructureApi(
+                rollName,
+                userRole,
+                RfiDatabase.selectedClientId,
+                RfiDatabase.selectedSchemeId,
+                RfiDatabase.selectedWorkTypeId
+            )
+            if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
+                val model = response.body()
+                model?.let {
+                    Log.d(TAG, "getStructureApi: response: $it")
+                    val dbModel = ConverterModel.convertStructureModel(it)
+                    try {
+                        CustomTitle.rfiDB.structureDao().insertAll(dbModel)
+                        getStructureDataFromDB()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "getStructureApi: Exception: ",e )
+                    }
+                }
+
+            } else {
+                Log.e(TAG, "getStructureApi: response: ${response.errorBody()}")
             }
 
         }
