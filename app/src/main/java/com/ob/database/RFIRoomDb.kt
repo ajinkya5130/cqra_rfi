@@ -6,10 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.ob.database.dao.ClientDao
 import com.ob.database.dao.ProjectDao
+import com.ob.database.dao.StageDao
 import com.ob.database.dao.StructureDao
 import com.ob.database.dao.WorkTypeDao
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 
@@ -18,6 +20,7 @@ import com.ob.database.db_tables.WorkTypeTableModel
     ProjectTableModel::class,
     WorkTypeTableModel::class,
     StructureTableModel::class,
+    StageTableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -29,6 +32,7 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun workTypeDao(): WorkTypeDao
     abstract fun structureDao(): StructureDao
+    abstract fun stageDao(): StageDao
 
     companion object {
         @Volatile

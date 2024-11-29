@@ -5,16 +5,22 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.CustomTitle
 import com.ob.rfi.api.APIClient
 import com.ob.rfi.api.ConverterModel
 import com.ob.rfi.db.RfiDatabase
+import com.ob.rfi.models.APIErrorModel
+import com.ob.rfi.models.SpinnerType
+import com.ob.rfi.models.StageApiResponseModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
 import java.net.HttpURLConnection
 
 class AllocateTaskViewModel : ViewModel() {
@@ -30,16 +36,25 @@ class AllocateTaskViewModel : ViewModel() {
     var lvStructureData: LiveData<Int>
     private val _lvStructureData = MutableLiveData<Int>()
 
+    var lvStageData: LiveData<Int>
+    private val _lvStageData = MutableLiveData<Int>()
+
+    var lvErrorData: LiveData<APIErrorModel>
+    private val _lvErrorData = MutableLiveData<APIErrorModel>()
+
     var list = ArrayList<ClientTableModel>()
     var listOfProject = ArrayList<ProjectTableModel>()
     var listOfWorkType = ArrayList<WorkTypeTableModel>()
     var listOfStructure = ArrayList<StructureTableModel>()
+    var listOfStage = arrayListOf<StageTableModel>()
 
     init {
         lvClientData = _lvClientData
         lvProjectData = _lvProjectData
         lvWorkTypeData = _lvWorkTypeData
         lvStructureData = _lvStructureData
+        lvStageData = _lvStageData
+        lvErrorData = _lvErrorData
     }
 
     companion object {
@@ -71,7 +86,7 @@ class AllocateTaskViewModel : ViewModel() {
                 listOfProject.add(0, ProjectTableModel(-1, Scheme_Name = "Select Project"))
             }
             val count = listOfProject.size
-            Log.d(TAG, "listOfProject: count: $count ")
+            Log.d(TAG, "getProjectDataFromDB: count: $count ")
             _lvProjectData.postValue(count)
         }
     }
@@ -107,7 +122,7 @@ class AllocateTaskViewModel : ViewModel() {
                 listOfStructure.add(0, StructureTableModel(-1, Bldg_Name = "Select Structure"))
             }
             val count = listOfStructure.size
-            Log.d(TAG, "listOfStructure: count: $count ")
+            Log.d(TAG, "getStructureDataFromDB: count: $count ")
             _lvStructureData.postValue(count)
         }
     }
@@ -128,7 +143,7 @@ class AllocateTaskViewModel : ViewModel() {
                 }
 
             } else {
-                Log.e(TAG, "getClientProjectWorkType: response: ${response.errorBody()}")
+                Log.e(TAG, "getProjectApi: response: ${response.errorBody()}")
             }
 
         }
@@ -143,7 +158,7 @@ class AllocateTaskViewModel : ViewModel() {
             if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
                 val model = response.body()
                 model?.let {
-                    Log.d(TAG, "getProjectApi: response: $it")
+                    Log.d(TAG, "getWorkTypeSequenceApi: response: $it")
                     val dbModel = ConverterModel.convertWorkTypeModel(it)
                     try {
                         CustomTitle.rfiDB.workTypeDao().insertAll(dbModel)
@@ -154,7 +169,7 @@ class AllocateTaskViewModel : ViewModel() {
                 }
 
             } else {
-                Log.e(TAG, "getClientProjectWorkType: response: ${response.errorBody()}")
+                Log.e(TAG, "getWorkTypeSequenceApi: response: ${response.errorBody()}")
             }
 
         }
@@ -189,6 +204,62 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
+    fun getStageApi(rollName: Int, userRole: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = APIClient.getAPIInterface().getStageApi(
+                rollName,
+                userRole,
+                RfiDatabase.selectedClientId,
+                RfiDatabase.selectedSchemeId,
+                RfiDatabase.selectedWorkTypeId,
+                RfiDatabase.selectedBuildingId
+            )
+            if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
+                val responseBody: ResponseBody = response.body()!!
+                Log.d(TAG, "getStageApi: response: $responseBody")
+                val model = Gson().fromJson(responseBody.string(), StageApiResponseModel::class.java)
+                model?.let {
+                    Log.d(TAG, "getStageApi: response: $it")
+                    val dbModel = ConverterModel.convertStageModel(it)
+                    try {
+                        CustomTitle.rfiDB.stageDao().insertAll(dbModel)
+                        getStageDataFromDB()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "getStageApi: Exception: ",e )
+                    }
+                }
+
+            } else {
+                Log.e(TAG, "getStageApi: response: ${response.errorBody()}")
+                response.errorBody()?.let {
+                    val model = Gson().fromJson(it.string(), APIErrorModel::class.java)
+                    model.message = "Something is wrong while fetching Stage Data, Please try again!"
+                    model.spinnerType = SpinnerType.STAGE
+                    listOfStage = arrayListOf()
+                    _lvErrorData.postValue(model)
+                    // TODO: 30/11/24 clear stage SPinner
+
+                    Log.e(TAG, "getStageApi: Error model : $model")
+                }
+
+            }
+
+        }
+    }
+
+
+    fun getStageDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            listOfStage =
+                CustomTitle.rfiDB.stageDao().getAllStagesOrFloor(RfiDatabase.selectedSchemeId,RfiDatabase.selectedBuildingId,RfiDatabase.selectedWorkTypeId) as ArrayList<StageTableModel>
+            if (listOfStage.size != 0) {
+                listOfStage.add(0, StageTableModel(floor_Id = "-1", floor_Name = "Select Floor"))
+            }
+            val count = listOfStage.size
+            Log.d(TAG, "getStageDataFromDB: count: $count ")
+            _lvStageData.postValue(count)
+        }
+    }
 
     fun getWorkTypeFromDB() {
         viewModelScope.launch(Dispatchers.IO) {

@@ -2,10 +2,12 @@ package com.ob.rfi.api
 
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.models.ClientApiResponseModelItem
 import com.ob.rfi.models.Project
+import com.ob.rfi.models.StageApiResponseModelItem
 import com.ob.rfi.models.StructureResponseModelItem
 import com.ob.rfi.models.WorkTypeResponseModelItem
 
@@ -53,11 +55,27 @@ object ConverterModel {
         val list = ArrayList<StructureTableModel>()
         listOfStructure.forEach { model ->
             list.add(StructureTableModel().apply{
-                pk_building_id  = model.structureId
+                //pk_building_id  = model.structureId
                 Bldg_ID = model.structureId.toString()
                 Bldg_Name = model.structureName
                 Build_scheme_id = model.projectId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
+            })
+        }
+        return list
+    }
+
+    fun convertStageModel(listOfStage: ArrayList<StageApiResponseModelItem>): List<StageTableModel> {
+        val list = ArrayList<StageTableModel>()
+        listOfStage.forEach { model ->
+            list.add(StageTableModel().apply{
+                //pk_building_id  = model.structureId
+                floor_Id = model.stageId.toString()
+                floor_Name = model.stageName
+                FK_Bldg_ID = model.structureId.toString()
+                FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
+                Floor_Scheme_ID = model.projectId.toString()
+
             })
         }
         return list

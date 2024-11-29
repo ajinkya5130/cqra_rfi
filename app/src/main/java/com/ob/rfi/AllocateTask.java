@@ -28,9 +28,11 @@ import androidx.lifecycle.ViewModelProvider;
 import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
 import com.ob.database.db_tables.ClientTableModel;
 import com.ob.database.db_tables.ProjectTableModel;
+import com.ob.database.db_tables.StageTableModel;
 import com.ob.database.db_tables.StructureTableModel;
 import com.ob.database.db_tables.WorkTypeTableModel;
 import com.ob.rfi.db.RfiDatabase;
+import com.ob.rfi.models.SpinnerType;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
 
@@ -365,6 +367,39 @@ public class AllocateTask extends CustomTitle {
                     }
                 }
         );
+
+        Objects.requireNonNull(viewModel.getLvStageData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvStageData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: getLvStageData");
+                        setFloorSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvStageData ");
+                        viewModel.getStageApi(31, "Maker");
+                    }
+                }
+        );
+
+        Objects.requireNonNull(viewModel.getLvErrorData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvStageData: "+value);
+                    resetSpinner(value.getSpinnerType());
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setMessage(value.getMessage());
+                    builder.setTitle("Error");
+                    builder.setPositiveButton("Ok", (dialog, which) -> dialog.dismiss());
+                    builder.show();
+                }
+        );
+    }
+
+    private void resetSpinner(SpinnerType spinnerType) {
+        if (spinnerType.equals(SpinnerType.STAGE)){
+            setFloorSpinnerData();
+        }
     }
 
 
@@ -731,7 +766,7 @@ public class AllocateTask extends CustomTitle {
                 if (position > 0) {
                     db.selectedBuildingId = bldgId[position];
                     db.selectedNodeId = bldgId[position];
-
+                    viewModel.getStageDataFromDB();
                     /*
                     if (isDataAvialableForID("floor", "FK_Bldg_ID",
                             db.selectedBuildingId)) {
@@ -776,39 +811,17 @@ public class AllocateTask extends CustomTitle {
         });
     }
 
-    private void setFloorSpinnerData(String buld_id, final String schemeid) {
+    private void setFloorSpinnerData() {
 
-        // floor (floor_Id TEXT,floor_Name TEXT,Floor_Scheme_ID TEXT,FK_Bldg_ID
-        // TEXT, user_id TEXT)");
+        ArrayList<StageTableModel> list = viewModel.getListOfStage();
+        int size = list.size();
+        String[] items = new String[size];
+        floorid = new String[size];
 
-        String where = "f.Floor_Scheme_ID='" + schemeid
-                + "' AND f.FK_Bldg_ID='" + buld_id + "' AND f.FK_WorkTyp_ID='"
-                + db.selectedWorkTypeId + "' AND f.user_id='" + db.userId
-                + "' AND s.PK_Scheme_ID=f.Floor_Scheme_ID";
-        Cursor cursor = db.select("floor as f, Scheme as s",
-                "distinct(f.floor_Id),f.floor_Name", where, null, null, null,
-                null);
-
-        floorid = new String[cursor.getCount()];
-        final String[] items = new String[cursor.getCount() + 1];
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-
-            do {
-                floorid[cursor.getPosition()] = cursor.getString(0);
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "Floor(s) not available";
+        for(int i =0; i<size; i++){
+            floorid[i] = list.get(i).getFloor_Id();
+            items[i] = list.get(i).getFloor_Name();
         }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
-        }
-
-        final String where1 = "FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-                + "' AND user_id='" + db.userId + "'";
-        final String table = "Unit";
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, items);
@@ -820,23 +833,10 @@ public class AllocateTask extends CustomTitle {
             public void onItemSelected(AdapterView<?> arg0, View arg1,
                                        int position, long arg3) {
                 if (position > 0) {
-                    db.selectedFloorId = floorid[position - 1];
-                    db.selectedNodeId = floorid[position - 1];
-                    // setUnitSpinnerData(floorid[position - 1],schemeid);
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 30-APRIL-2015
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=3) {
-                     * setUnitSpinnerData(floorid[position - 1],schemeid);
-                     * unitSpin.setClickable(true); unitSpin.setSelection(0); }
-                     *//***** AKSHAY *****/
-                    if (isDataAvialableForID("Unit", "Fk_Floor_ID",
+                    db.selectedFloorId = floorid[position];
+                    db.selectedNodeId = floorid[position];
+
+                   /* if (isDataAvialableForID("Unit", "Fk_Floor_ID",
                             db.selectedFloorId)) {
                         setUnitSpinnerData(db.selectedFloorId,
                                 db.selectedSchemeId);
@@ -850,23 +850,7 @@ public class AllocateTask extends CustomTitle {
 								db.selectedSchemeId, db.selectedWorkTypeId,
 								db.selectedFloorId};
 						callUnitService();
-
-
-//						method = "getCheckList";
-//                        param = new String[]{"userID", "userRole", "workTypeId","nodeId",
-//                        };
-//                        value = new String[]{db.userId, "maker",
-//                                db.selectedWorkTypeId,db.selectedNodeId};
-//                        callCheckListService();
-
-//                        method = "getQuestion";
-//                        param = new String[]{ /*"userID", "userRole",*/ "nodeId",
-//                                "groupId"};
-//                        value = new String[]{ /*db.userId, "maker",*/
-//                                db.selectedNodeId, db.selectedGroupId};
-//                        callQuestionService();
-
-                    }
+                    }*/
 
                 } else {
                     unitSpin.setClickable(false);
@@ -878,17 +862,6 @@ public class AllocateTask extends CustomTitle {
                     elementspin.setSelection(0);
                     subelementspin.setClickable(false);
                     subelementspin.setSelection(0);
-                    //checklistspin.setClickable(false);
-                    //checklistspin.setSelection(0);
-
-					/*db.selectedChecklistId = "";
-					db.selectedSubGroupId = "";
-					db.selectedFloorId = "";
-					db.selectedUnitId = "";
-					db.selectedSubUnitId = "";
-					db.selectedElementId = "";
-					db.selectedSubElementId = "";*/
-
                 }
             }
 
@@ -1846,7 +1819,7 @@ public class AllocateTask extends CustomTitle {
                             + fk_worktype_id + "','" + db.userId + "'";
                     db.insert("floor", column, values);
                 }
-                setFloorSpinnerData(db.selectedBuildingId, db.selectedSchemeId);
+                //setFloorSpinnerData();
                 stageSpin.setClickable(true);
                 stageSpin.setSelection(0);
             } catch (Exception e) {

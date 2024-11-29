@@ -5,6 +5,7 @@ import com.ob.rfi.models.ClientApiResponseModel
 import com.ob.rfi.models.ProjectApiResponseModel
 import com.ob.rfi.models.StructureResponseModel
 import com.ob.rfi.models.WorkTypeResponseModel
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -42,4 +43,15 @@ interface APIInterface {
         @Path("workSeqType") workTypeSeq: String,
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<StructureResponseModel>
+
+    @GET("stage/getStage/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{structureId}")
+   suspend fun getStageApi(
+        @Path("userID") userId: Int,
+        @Path("userRole") userRole: String,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("workSeqType") workTypeSeq: String,
+        @Path("structureId") structureId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
 }
