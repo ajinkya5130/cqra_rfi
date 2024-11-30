@@ -229,13 +229,7 @@ public class AllocateTask extends CustomTitle {
 
         });
 
-        backBtn.setOnClickListener(new OnClickListener()
-        {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        backBtn.setOnClickListener(v -> onBackPressed());
     }
 
     private void observerData() {
@@ -1036,77 +1030,6 @@ public class AllocateTask extends CustomTitle {
             }
         });
         service.execute("");
-    }
-
-    protected void callStructureService() {
-        Webservice service = new Webservice(AllocateTask.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-
-                responseData = data;
-                System.out.println("success data");
-                saveStructureData(data);
-
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    protected void saveStructureData(String data) {      ///, String schemeID
-        // TODO Auto-generated method stub
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No DATA!!!");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray structureArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < structureArray.length(); i++) {
-                    JSONObject structureObject = structureArray
-                            .getJSONObject(i);
-                    String building_id = structureObject.getString("NODE_Id");
-                    String building_name = structureObject
-                            .getString("NODE_Description_var");
-                    String building_project_id =structureObject
-							.getString("NODE_PRJ_Id");    // schemeID
-                    String parent_id = "0"/*structureObject
-							.getString("NODE_Parent_Id")*/;
-                    String fk_worktype_id = db.selectedWorkTypeId/*structureObject
-							.getString("NDCHKL_WT_Id")*/;
-                    String column = "Bldg_ID,Bldg_Name,Build_scheme_id,FK_WorkTyp_ID,user_id";
-                    String values = "'" + building_id + "','" + building_name
-                            + "','" + building_project_id + "','"
-                            + fk_worktype_id + "','" + db.userId + "'";
-                    db.insert("Building", column, values);
-                }
-                //setBulidngSpinnerData(db.selectedSchemeId);
-                structureSpin.setClickable(true);
-                structureSpin.setSelection(0);
-
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
     }
 
     public void saveStageData(String data) {
