@@ -6,6 +6,8 @@ import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
+import com.ob.database.db_tables.SubUnitTableModel
+import com.ob.database.db_tables.UnitTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.models.ChecklistApiResponseModelItem
 import com.ob.rfi.models.ClientApiResponseModelItem
@@ -13,6 +15,8 @@ import com.ob.rfi.models.GroupListApiResponseModelItem
 import com.ob.rfi.models.Project
 import com.ob.rfi.models.StageApiResponseModelItem
 import com.ob.rfi.models.StructureResponseModelItem
+import com.ob.rfi.models.SubUnitListApiResponseModelItem
+import com.ob.rfi.models.UnitListApiResponseModelItem
 import com.ob.rfi.models.WorkTypeResponseModelItem
 
 object ConverterModel {
@@ -106,6 +110,38 @@ object ConverterModel {
                 FK_Bldg_ID = model.structureId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
                 Floor_Scheme_ID = model.projectId.toString()
+
+            })
+        }
+        return list
+    }
+
+    fun convertUnitModel(listOfStage: ArrayList<UnitListApiResponseModelItem>): List<UnitTableModel> {
+        val list = ArrayList<UnitTableModel>()
+        listOfStage.forEach { model ->
+            list.add(UnitTableModel().apply{
+                //pk_building_id  = model.structureId
+                Unit_ID = model.unitId.toString()
+                Unit_Name = model.unitName
+                Fk_Floor_ID = (model.stageId?:0).toString()
+                Unit_Scheme_id = model.projectId.toString()
+                FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
+
+            })
+        }
+        return list
+    }
+
+    fun convertSubUnitModel(listOfStage: ArrayList<SubUnitListApiResponseModelItem>): List<SubUnitTableModel> {
+        val list = ArrayList<SubUnitTableModel>()
+        listOfStage.forEach { model ->
+            list.add(SubUnitTableModel().apply{
+                //pk_building_id  = model.structureId
+                subUnitId = model.subUnitId.toString()
+                subUnitName = model.subUnitName
+                fkUnitId = model.unitId.toString()
+                fkWorkTypId = model.activitySequenceGroupRfiId.toString()
+                subUnitSchemeId = model.projectId.toString()
 
             })
         }

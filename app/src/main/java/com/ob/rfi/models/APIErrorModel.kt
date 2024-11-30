@@ -20,6 +20,8 @@ enum class SpinnerType(int: Int){
     WORK_TYPE(3),
     STRUCTURE(4),
     STAGE(5),
-    CHECKLIST(6),
-    GroupLIST(7),
+    CHECK_LIST(6),
+    GROUP_LIST(7),
+    UNIT_LIST(8),
+    SUB_UNIT_LIST(9),
 }

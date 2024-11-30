@@ -11,6 +11,8 @@ import com.ob.database.dao.GroupListDao
 import com.ob.database.dao.ProjectDao
 import com.ob.database.dao.StageDao
 import com.ob.database.dao.StructureDao
+import com.ob.database.dao.SubUnitDao
+import com.ob.database.dao.UnitDao
 import com.ob.database.dao.WorkTypeDao
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
@@ -18,17 +20,22 @@ import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
+import com.ob.database.db_tables.SubUnitTableModel
+import com.ob.database.db_tables.UnitTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import java.util.concurrent.Executors
 
 
-@Database(entities = [ClientTableModel::class,
+@Database(entities = [
+    ClientTableModel::class,
     ProjectTableModel::class,
     WorkTypeTableModel::class,
     StructureTableModel::class,
     ChecklistTableModel::class,
     GroupListTableModel::class,
     StageTableModel::class,
+    UnitTableModel::class,
+    SubUnitTableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -43,6 +50,8 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun groupListDao(): GroupListDao
     abstract fun structureDao(): StructureDao
     abstract fun stageDao(): StageDao
+    abstract fun unitDao(): UnitDao
+    abstract fun subUnitDao(): SubUnitDao
 
     companion object {
         const val TAG = "RFIRoomDb"

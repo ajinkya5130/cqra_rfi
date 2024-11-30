@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.ob.AppUtil.NO_DATA_AVAILABLE
+import com.ob.AppUtil.NO_DATA_AVAILABLE_VAL
 import com.ob.database.RFIRoomDb
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
@@ -13,6 +15,8 @@ import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
+import com.ob.database.db_tables.SubUnitTableModel
+import com.ob.database.db_tables.UnitTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
 import com.ob.rfi.CustomTitle
 import com.ob.rfi.api.APIClient
@@ -23,6 +27,8 @@ import com.ob.rfi.models.ChecklistApiResponseModel
 import com.ob.rfi.models.GroupListApiResponseModel
 import com.ob.rfi.models.SpinnerType
 import com.ob.rfi.models.StageApiResponseModel
+import com.ob.rfi.models.SubUnitListApiResponseModel
+import com.ob.rfi.models.UnitListApiResponseModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
@@ -50,6 +56,12 @@ class AllocateTaskViewModel : ViewModel() {
     var lvStageData: LiveData<Int>
     private val _lvStageData = MutableLiveData<Int>()
 
+    var lvUnitData: LiveData<Int>
+    private val _lvUnitData = MutableLiveData<Int>()
+
+    var lvSubUnitData: LiveData<Int>
+    private val _lvSubUnitData = MutableLiveData<Int>()
+
     var lvErrorData: LiveData<APIErrorModel>
     private val _lvErrorData = MutableLiveData<APIErrorModel>()
 
@@ -60,6 +72,8 @@ class AllocateTaskViewModel : ViewModel() {
     var listOfStage = arrayListOf<StageTableModel>()
     var listOfCheckList = arrayListOf<ChecklistTableModel>()
     var listOfGroupList = arrayListOf<GroupListTableModel>()
+    var listOfUnitList = arrayListOf<UnitTableModel>()
+    var listOfSubUnitList = arrayListOf<SubUnitTableModel>()
 
     init {
         lvClientData = _lvClientData
@@ -69,45 +83,13 @@ class AllocateTaskViewModel : ViewModel() {
         lvCheckListData = _lvCheckListData
         lvGroupListData = _lvGroupListData
         lvStageData = _lvStageData
+        lvUnitData = _lvUnitData
+        lvSubUnitData = _lvSubUnitData
         lvErrorData = _lvErrorData
     }
 
     companion object {
         private const val TAG = "AllocateTaskViewModel"
-    }
-
-    fun getClientData() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                list = CustomTitle.rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
-                if (list.size != 0) {
-                    list.add(0, ClientTableModel(-1, Clnt_Name = "Select Client"))
-                }
-                val count = list.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getClientData: count: $count ")
-                _lvClientData.postValue(count)
-            } catch (e: Exception) {
-                Log.e(TAG, "${RFIRoomDb.TAG} - getClientData: Exception: ",e )
-            }
-            //Log.d(TAG, "getClientData: list: $list")
-        }
-    }
-
-    fun getProjectDataFromDB() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                listOfProject =
-                    CustomTitle.rfiDB.projectDao().getAllProjects(RfiDatabase.selectedClientId) as ArrayList<ProjectTableModel>
-                if (listOfProject.size != 0) {
-                    listOfProject.add(0, ProjectTableModel(-1, Scheme_Name = "Select Project"))
-                }
-                val count = listOfProject.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getProjectDataFromDB: count: $count ")
-                _lvProjectData.postValue(count)
-            } catch (e: Exception) {
-                Log.d(TAG, "${RFIRoomDb.TAG} - getProjectDataFromDB: Exception, ",e)
-            }
-        }
     }
 
     fun getClientProjectWorkType(rollName: Int, userRole: String) {
@@ -117,12 +99,24 @@ class AllocateTaskViewModel : ViewModel() {
                 userRole
             )
             if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
-                Log.d(TAG, "getClientProjectWorkType: response: ${response.body()}")
                 val model = response.body()
                 model?.let {
-                    val dbModel = ConverterModel.convertClientData(it[0])
-                    CustomTitle.rfiDB.clientDao().insert(dbModel)
-                    getClientData()
+                    Log.d(TAG, "getClientProjectWorkType: response: $it")
+                    if (it.isEmpty()) {
+                        list.clear()
+                        list.add(
+                            0,
+                            ClientTableModel(
+                                Clnt_Name = NO_DATA_AVAILABLE,
+                                Client_ID = NO_DATA_AVAILABLE_VAL
+                            )
+                        )
+                        _lvClientData.postValue(1)
+                    } else {
+                        val dbModel = ConverterModel.convertClientData(it[0])
+                        CustomTitle.rfiDB.clientDao().insert(dbModel)
+                        getClientData()
+                    }
                 }
 
             } else {
@@ -132,23 +126,6 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
-
-    fun getStructureDataFromDB() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                listOfStructure =
-                    CustomTitle.rfiDB.structureDao().getAllStructure(RfiDatabase.selectedSchemeId,RfiDatabase.selectedWorkTypeId) as ArrayList<StructureTableModel>
-                if (listOfStructure.size != 0) {
-                    listOfStructure.add(0, StructureTableModel(-1, Bldg_Name = "Select Structure"))
-                }
-                val count = listOfStructure.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: count: $count ")
-                _lvStructureData.postValue(count)
-            } catch (e: Exception) {
-                Log.e(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: Exception: ",e )
-            }
-        }
-    }
 
     fun getProjectApi(rollName: Int, userRole: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -160,9 +137,21 @@ class AllocateTaskViewModel : ViewModel() {
                 val model = response.body()
                 model?.let {
                     Log.d(TAG, "getProjectApi: response: $it")
-                    val dbModel = ConverterModel.convertProjectData(it[0].project)
-                    CustomTitle.rfiDB.projectDao().insert(dbModel)
-                    getProjectDataFromDB()
+                    if (it.isEmpty()) {
+                        listOfProject.clear()
+                        listOfProject.add(
+                            0,
+                            ProjectTableModel(
+                                Scheme_Name = NO_DATA_AVAILABLE,
+                                PK_Scheme_ID = NO_DATA_AVAILABLE_VAL
+                            )
+                        )
+                        _lvProjectData.postValue(1)
+                    } else {
+                        val dbModel = ConverterModel.convertProjectData(it[0].project)
+                        CustomTitle.rfiDB.projectDao().insert(dbModel)
+                        getProjectDataFromDB()
+                    }
                 }
 
             } else {
@@ -182,17 +171,35 @@ class AllocateTaskViewModel : ViewModel() {
                 val model = response.body()
                 model?.let {
                     Log.d(TAG, "getWorkTypeSequenceApi: response: $it")
-                    val dbModel = ConverterModel.convertWorkTypeModel(it)
                     try {
-                        CustomTitle.rfiDB.workTypeDao().insertAll(dbModel)
-                        getWorkTypeFromDB()
+                        if (it.isEmpty()) {
+                            listOfWorkType.clear()
+                            listOfWorkType.add(
+                                0,
+                                WorkTypeTableModel(
+                                    activitySequenceName = NO_DATA_AVAILABLE,
+                                    activitySequenceGroupId = NO_DATA_AVAILABLE_VAL.toInt()
+                                )
+                            )
+                            _lvWorkTypeData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertWorkTypeModel(it)
+                            CustomTitle.rfiDB.workTypeDao().insertAll(dbModel)
+                            getWorkTypeFromDB()
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "getWorkTypeSequenceApi: Exception: ",e )
+                        Log.e(TAG, "getWorkTypeSequenceApi: Exception: ", e)
                     }
                 }
 
             } else {
-                Log.e(TAG, "getWorkTypeSequenceApi: response: ${response.errorBody()}")
+                val model = APIErrorModel()
+                model.message =
+                    "Something is wrong while fetching CheckList Data, Please try again!"
+                model.spinnerType = SpinnerType.WORK_TYPE
+                listOfWorkType = arrayListOf()
+                _lvErrorData.postValue(model)
+                Log.e(TAG, "getStructureApi: response:Error $model")
             }
 
         }
@@ -212,17 +219,35 @@ class AllocateTaskViewModel : ViewModel() {
                 val model = response.body()
                 model?.let {
                     Log.d(TAG, "getStructureApi: response: $it")
-                    val dbModel = ConverterModel.convertStructureModel(it)
                     try {
-                        CustomTitle.rfiDB.structureDao().insertAll(dbModel)
-                        getStructureDataFromDB()
+                        if (it.isEmpty()) {
+                            listOfStructure.clear()
+                            listOfStructure.add(
+                                0,
+                                StructureTableModel(
+                                    Bldg_Name = NO_DATA_AVAILABLE,
+                                    Bldg_ID = NO_DATA_AVAILABLE_VAL
+                                )
+                            )
+                            _lvStructureData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertStructureModel(it)
+                            CustomTitle.rfiDB.structureDao().insertAll(dbModel)
+                            getStructureDataFromDB()
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "getStructureApi: Exception: ",e )
+                        Log.e(TAG, "getStructureApi: Exception: ", e)
                     }
                 }
 
             } else {
-                Log.e(TAG, "getStructureApi: response: ${response.errorBody()}")
+                val model = APIErrorModel()
+                model.message =
+                    "Something is wrong while fetching CheckList Data, Please try again!"
+                model.spinnerType = SpinnerType.STRUCTURE
+                listOfStructure = arrayListOf()
+                _lvErrorData.postValue(model)
+                Log.e(TAG, "getStructureApi: response: error: $model")
             }
 
         }
@@ -240,27 +265,46 @@ class AllocateTaskViewModel : ViewModel() {
             if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
                 val model = response.body()
                 model?.let {
-                    Log.d(TAG, "getStageApi: response: $it")
-                    val checkListModel = Gson().fromJson(it.string(), ChecklistApiResponseModel::class.java)
-                    Log.d(TAG, "getStructureApi: response: $it")
-                    val dbModel = ConverterModel.convertCheckListModel(RfiDatabase.selectedNodeId,checkListModel)
+                    val checkListModel =
+                        Gson().fromJson(it.string(), ChecklistApiResponseModel::class.java)
+                    Log.d(TAG, "getStructureApi: response: $checkListModel")
                     try {
-                        CustomTitle.rfiDB.checkListDao().insertAll(dbModel)
-                        getCheckListDataFromDB()
+                        if (checkListModel.isEmpty()) {
+                            listOfCheckList.clear()
+                            listOfCheckList.add(
+                                0,
+                                ChecklistTableModel(
+                                    Checklist_Name = NO_DATA_AVAILABLE,
+                                    Checklist_ID = NO_DATA_AVAILABLE_VAL
+                                )
+                            )
+                            _lvCheckListData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertCheckListModel(
+                                RfiDatabase.selectedNodeId,
+                                checkListModel
+                            )
+                            CustomTitle.rfiDB.checkListDao().insertAll(dbModel)
+                            getCheckListDataFromDB()
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "getStructureApi: Exception: ",e )
+                        Log.e(TAG, "getStructureApi: Exception: ", e)
                     }
                 }
 
             } else {
-                Log.e(TAG, "getStructureApi: response: ${response.errorBody()}")
                 response.errorBody()?.let {
-                    val model = Gson().fromJson(it.string(), APIErrorModel::class.java)
-                    model.message = "Something is wrong while fetching CheckList Data, Please try again!"
-                    model.spinnerType = SpinnerType.CHECKLIST
+                    val value = it.string()
+                    Log.e(TAG, "getStructureApi: Error response: $value")
+                    var model = APIErrorModel()
+                    if (value.isNotEmpty()){
+                        model = Gson().fromJson(value, APIErrorModel::class.java)
+                    }
+                    model.message =
+                        "Something is wrong while fetching CheckList Data, Please try again!"
+                    model.spinnerType = SpinnerType.CHECK_LIST
                     listOfCheckList = arrayListOf()
                     _lvErrorData.postValue(model)
-
                     Log.e(TAG, "getStageApi: Error model : $model")
                 }
             }
@@ -280,24 +324,44 @@ class AllocateTaskViewModel : ViewModel() {
             if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
                 val model = response.body()
                 model?.let {
-                    Log.d(TAG, "getGroupListApi: response: $it")
-                    val groupListModel = Gson().fromJson(it.string(), GroupListApiResponseModel::class.java)
-                    Log.d(TAG, "getGroupListApi: response: $it")
-                    val dbModel = ConverterModel.convertGroupListModel(RfiDatabase.selectedNodeId,groupListModel)
+                    val groupListModel =
+                        Gson().fromJson(it.string(), GroupListApiResponseModel::class.java)
+                    Log.d(TAG, "getGroupListApi: response: $groupListModel")
                     try {
-                        CustomTitle.rfiDB.groupListDao().insertAll(dbModel)
-                        getGroupListDataFromDB()
+                        if (groupListModel.isEmpty()) {
+                            listOfGroupList.clear()
+                            listOfGroupList.add(
+                                0,
+                                GroupListTableModel(
+                                    Grp_Name = NO_DATA_AVAILABLE,
+                                    Grp_ID = NO_DATA_AVAILABLE_VAL
+                                )
+                            )
+                            _lvGroupListData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertGroupListModel(
+                                RfiDatabase.selectedNodeId,
+                                groupListModel
+                            )
+                            CustomTitle.rfiDB.groupListDao().insertAll(dbModel)
+                            getGroupListDataFromDB()
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "getGroupListApi: Exception: ",e )
+                        Log.e(TAG, "getGroupListApi: Exception: ", e)
                     }
                 }
 
             } else {
-                Log.e(TAG, "getGroupListApi: response: ${response.errorBody()}")
                 response.errorBody()?.let {
-                    val model = Gson().fromJson(it.string(), APIErrorModel::class.java)
-                    model.message = "Something is wrong while fetching CheckList Data, Please try again!"
-                    model.spinnerType = SpinnerType.GroupLIST
+                    val value = it.string()
+                    Log.e(TAG, "getGroupListApi: response: $value")
+                    var model = APIErrorModel()
+                    if (value.isNotEmpty()){
+                        model = Gson().fromJson(value, APIErrorModel::class.java)
+                    }
+                    model.message =
+                        "Something is wrong while fetching CheckList Data, Please try again!"
+                    model.spinnerType = SpinnerType.GROUP_LIST
                     listOfGroupList = arrayListOf()
                     _lvErrorData.postValue(model)
 
@@ -308,23 +372,6 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
-    fun getCheckListDataFromDB() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                listOfCheckList =
-                    CustomTitle.rfiDB.checkListDao().getAllCheckList(RfiDatabase.selectedWorkTypeId,RfiDatabase.selectedNodeId) as ArrayList<ChecklistTableModel>
-                if (listOfCheckList.size != 0) {
-                    listOfCheckList.add(0, ChecklistTableModel(Checklist_Name =  "Select Check", Checklist_ID = "-1"))
-                }
-                val count = listOfCheckList.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getCheckListDataFromDB: count: $count ")
-                _lvCheckListData.postValue(count)
-            } catch (e: Exception) {
-                _lvErrorData.postValue(APIErrorModel(message = "Something is wrong while fetching Check List Data, Please try again!, ${e.message}", spinnerType = SpinnerType.CHECKLIST))
-                Log.e(TAG, "${RFIRoomDb.TAG} - getCheckListDataFromDB: Exception: ",e )
-            }
-        }
-    }
 
     fun getStageApi(rollName: Int, userRole: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -340,23 +387,41 @@ class AllocateTaskViewModel : ViewModel() {
             if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
                 val responseBody: ResponseBody = response.body()!!
                 Log.d(TAG, "getStageApi: response: $responseBody")
-                val model = Gson().fromJson(responseBody.string(), StageApiResponseModel::class.java)
+                val model =
+                    Gson().fromJson(responseBody.string(), StageApiResponseModel::class.java)
                 model?.let {
                     Log.d(TAG, "getStageApi: response: $it")
-                    val dbModel = ConverterModel.convertStageModel(it)
                     try {
-                        CustomTitle.rfiDB.stageDao().insertAll(dbModel)
-                        getStageDataFromDB()
+                        if (it.isEmpty()) {
+                            listOfStage.add(
+                                0,
+                                StageTableModel(
+                                    floor_Id = NO_DATA_AVAILABLE_VAL,
+                                    floor_Name = NO_DATA_AVAILABLE
+                                )
+                            )
+                            _lvStageData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertStageModel(it)
+                            CustomTitle.rfiDB.stageDao().insertAll(dbModel)
+                            getStageDataFromDB()
+                        }
+
                     } catch (e: Exception) {
-                        Log.e(TAG, "getStageApi: Exception: ",e )
+                        Log.e(TAG, "getStageApi: Exception: ", e)
                     }
                 }
 
             } else {
-                Log.e(TAG, "getStageApi: response: ${response.errorBody()}")
                 response.errorBody()?.let {
-                    val model = Gson().fromJson(it.string(), APIErrorModel::class.java)
-                    model.message = "Something is wrong while fetching Stage Data, Please try again!"
+                    val value = it.string()
+                    Log.e(TAG, "getStageApi: response: $value")
+                    var model = APIErrorModel()
+                    if (value.isNotEmpty()){
+                        model = Gson().fromJson(value, APIErrorModel::class.java)
+                    }
+                    model.message =
+                        "Something is wrong while fetching Stage Data, Please try again!"
                     model.spinnerType = SpinnerType.STAGE
                     listOfStage = arrayListOf()
                     _lvErrorData.postValue(model)
@@ -368,36 +433,228 @@ class AllocateTaskViewModel : ViewModel() {
         }
     }
 
+
+    fun getUnitApi(rollName: Int, userRole: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = APIClient.getAPIInterface().getUnitsApi(
+                rollName,
+                userRole,
+                RfiDatabase.selectedClientId,
+                RfiDatabase.selectedSchemeId,
+                RfiDatabase.selectedWorkTypeId,
+                RfiDatabase.selectedChecklistId,
+                RfiDatabase.selectedFloorId
+            )
+            if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
+                val responseBody: ResponseBody = response.body()!!
+                Log.d(TAG, "getUnitApi: response: $responseBody")
+                val model =
+                    Gson().fromJson(responseBody.string(), UnitListApiResponseModel::class.java)
+                model?.let {
+                    Log.d(TAG, "getUnitApi: response: $it")
+
+                    try {
+                        if (it.isEmpty()) {
+                            listOfUnitList.clear()
+                            listOfUnitList.add(
+                                0,
+                                UnitTableModel(
+                                    Unit_Name = NO_DATA_AVAILABLE,
+                                    Unit_ID = NO_DATA_AVAILABLE_VAL
+                                )
+                            )
+                            _lvUnitData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertUnitModel(it)
+                            CustomTitle.rfiDB.unitDao().insertAll(dbModel)
+                            getUnitListDataFromDB()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "getUnitApi: Exception: ", e)
+                    }
+                }
+
+            } else {
+                Log.e(TAG, "getUnitApi: response: ${response.errorBody()}")
+                //response.errorBody()?.let {
+                    val model = APIErrorModel()
+                    model.message =
+                        "Something is wrong while fetching Stage Data, Please try again!"
+                    model.spinnerType = SpinnerType.UNIT_LIST
+                    listOfStage = arrayListOf()
+                    _lvErrorData.postValue(model)
+                //}
+
+            }
+
+        }
+    }
+
+    fun getSubUnitApi(rollName: Int, userRole: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = APIClient.getAPIInterface().getSubUnitsApi(
+                rollName,
+                userRole,
+                RfiDatabase.selectedClientId,
+                RfiDatabase.selectedSchemeId,
+                RfiDatabase.selectedWorkTypeId,
+                RfiDatabase.selectedChecklistId,
+                RfiDatabase.selectedUnitId
+            )
+            if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
+                val responseBody: ResponseBody = response.body()!!
+                Log.d(TAG, "getSubUnitApi: response: $responseBody")
+                val model =
+                    Gson().fromJson(responseBody.string(), SubUnitListApiResponseModel::class.java)
+                model?.let {
+                    try {
+                        Log.d(TAG, "getSubUnitApi: response: $it")
+                        if (it.isEmpty()) {
+                            listOfSubUnitList.clear()
+                            listOfSubUnitList.add(
+                                0,
+                                SubUnitTableModel(
+                                    subUnitName = NO_DATA_AVAILABLE,
+                                    subUnitId = NO_DATA_AVAILABLE_VAL
+                                )
+                            )
+                            _lvSubUnitData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertSubUnitModel(it)
+                            CustomTitle.rfiDB.subUnitDao().insertAll(dbModel)
+                            getSubUnitListDataFromDB()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "getSubUnitApi: Exception: ", e)
+                    }
+                }
+
+            } else {
+                //Log.e(TAG, "getSubUnitApi: response: ${response.errorBody()}")
+                //response.errorBody()?.let {
+                    val model = APIErrorModel()
+                    model.message =
+                        "Something is wrong while fetching Sub Unit Data, Please try again!"
+                    model.spinnerType = SpinnerType.SUB_UNIT_LIST
+                    listOfStage = arrayListOf()
+                    _lvErrorData.postValue(model)
+                    Log.e(TAG, "getSubUnitApi: Error model : $model")
+                //}
+
+            }
+
+        }
+    }
+
     fun getGroupListDataFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfGroupList =
-                    CustomTitle.rfiDB.groupListDao().getAllGroupList(RfiDatabase.selectedChecklistId,RfiDatabase.selectedNodeId) as ArrayList<GroupListTableModel>
+                    CustomTitle.rfiDB.groupListDao().getAllGroupList(
+                        RfiDatabase.selectedChecklistId,
+                        RfiDatabase.selectedNodeId
+                    ) as ArrayList<GroupListTableModel>
                 if (listOfGroupList.size != 0) {
-                    listOfGroupList.add(0, GroupListTableModel(Grp_Name =  "Select Group", Grp_ID = "-1"))
+                    listOfGroupList.add(
+                        0,
+                        GroupListTableModel(Grp_Name = "Select Group", Grp_ID = "")
+                    )
                 }
                 val count = listOfGroupList.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getGroupListDataFromDB: count: $count ")
                 _lvGroupListData.postValue(count)
             } catch (e: Exception) {
-                _lvErrorData.postValue(APIErrorModel(message = "Something is wrong while fetching Group List Data, Please try again!, ${e.message}", spinnerType = SpinnerType.GroupLIST))
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Group List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.GROUP_LIST
+                    )
+                )
                 Log.e(TAG, "${RFIRoomDb.TAG} - getGroupListDataFromDB: Exception: ", e)
             }
         }
     }
+
+
+    fun getUnitListDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfUnitList =
+                    CustomTitle.rfiDB.unitDao()
+                        .getAllUnitList(RfiDatabase.selectedFloorId) as ArrayList<UnitTableModel>
+                if (listOfUnitList.size != 0) {
+                    listOfUnitList.add(0, UnitTableModel(Unit_Name = "Select Unit", Unit_ID = ""))
+                }
+                val count = listOfUnitList.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getUnitListDataFromDB: count: $count ")
+                _lvUnitData.postValue(count)
+            } catch (e: Exception) {
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Unit List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.UNIT_LIST
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getUnitListDataFromDB: Exception: ", e)
+            }
+        }
+    }
+
+    fun getSubUnitListDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfSubUnitList =
+                    CustomTitle.rfiDB.subUnitDao().getAllSubUnitList(
+                        RfiDatabase.selectedUnitId,
+                        RfiDatabase.selectedSchemeId,
+                        RfiDatabase.selectedWorkTypeId
+                    ) as ArrayList<SubUnitTableModel>
+                if (listOfSubUnitList.size != 0) {
+                    listOfSubUnitList.add(
+                        0,
+                        SubUnitTableModel(subUnitName = "Select Sub Unit", subUnitId = "")
+                    )
+                }
+                val count = listOfSubUnitList.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getSubUnitListDataFromDB: count: $count ")
+                _lvSubUnitData.postValue(count)
+            } catch (e: Exception) {
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching SubUnit List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.SUB_UNIT_LIST
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getSubUnitListDataFromDB: Exception: ", e)
+            }
+        }
+    }
+
     fun getStageDataFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfStage =
-                    CustomTitle.rfiDB.stageDao().getAllStagesOrFloor(RfiDatabase.selectedSchemeId,RfiDatabase.selectedBuildingId,RfiDatabase.selectedWorkTypeId) as ArrayList<StageTableModel>
+                    CustomTitle.rfiDB.stageDao().getAllStagesOrFloor(
+                        RfiDatabase.selectedSchemeId,
+                        RfiDatabase.selectedBuildingId,
+                        RfiDatabase.selectedWorkTypeId
+                    ) as ArrayList<StageTableModel>
                 if (listOfStage.size != 0) {
-                    listOfStage.add(0, StageTableModel(floor_Id = "-1", floor_Name = "Select Floor"))
+                    listOfStage.add(
+                        0,
+                        StageTableModel(floor_Id = "", floor_Name = "Select Floor")
+                    )
                 }
                 val count = listOfStage.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getStageDataFromDB: count: $count ")
                 _lvStageData.postValue(count)
             } catch (e: Exception) {
-                _lvErrorData.postValue(APIErrorModel(message = "Something is wrong while fetching Stage/floor List Data, Please try again!, ${e.message}", spinnerType = SpinnerType.STAGE))
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Stage/floor List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.STAGE
+                    )
+                )
                 Log.e(TAG, "${RFIRoomDb.TAG} - getAllStagesOrFloor: Exception: ", e)
             }
         }
@@ -407,16 +664,110 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfWorkType =
-                    CustomTitle.rfiDB.workTypeDao().getAllWork(RfiDatabase.selectedSchemeId) as ArrayList<WorkTypeTableModel>
+                    CustomTitle.rfiDB.workTypeDao()
+                        .getAllWork(RfiDatabase.selectedSchemeId) as ArrayList<WorkTypeTableModel>
                 if (listOfWorkType.size != 0) {
-                    listOfWorkType.add(0, WorkTypeTableModel(-1, activitySequenceName = "Select Work"))
+                    listOfWorkType.add(
+                        0,
+                        WorkTypeTableModel(activitySequenceGroupId = 0, activitySequenceName = "Select Work")
+                    )
                 }
                 val count = listOfWorkType.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - listOfWorkType: count: $count ")
                 _lvWorkTypeData.postValue(count)
             } catch (e: Exception) {
-                _lvErrorData.postValue(APIErrorModel(message = "Something is wrong while fetching Work type List Data, Please try again!, ${e.message}", spinnerType = SpinnerType.WORK_TYPE))
-                Log.e(TAG, "${RFIRoomDb.TAG} - getWorkTypeFromDB: Exception: ",e )
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Work type List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.WORK_TYPE
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getWorkTypeFromDB: Exception: ", e)
+            }
+        }
+    }
+
+    fun getCheckListDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfCheckList =
+                    CustomTitle.rfiDB.checkListDao().getAllCheckList(
+                        RfiDatabase.selectedWorkTypeId,
+                        RfiDatabase.selectedNodeId
+                    ) as ArrayList<ChecklistTableModel>
+                if (listOfCheckList.size != 0) {
+                    listOfCheckList.add(
+                        0,
+                        ChecklistTableModel(Checklist_Name = "Select Check", Checklist_ID = "")
+                    )
+                }
+                val count = listOfCheckList.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getCheckListDataFromDB: count: $count ")
+                _lvCheckListData.postValue(count)
+            } catch (e: Exception) {
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Check List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.CHECK_LIST
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getCheckListDataFromDB: Exception: ", e)
+            }
+        }
+    }
+
+    fun getClientData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                list = CustomTitle.rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
+                if (list.size != 0) {
+                    list.add(0, ClientTableModel(Client_ID = "", Clnt_Name = "Select Client"))
+                }
+                val count = list.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getClientData: count: $count ")
+                _lvClientData.postValue(count)
+            } catch (e: Exception) {
+                Log.e(TAG, "${RFIRoomDb.TAG} - getClientData: Exception: ", e)
+            }
+            //Log.d(TAG, "getClientData: list: $list")
+        }
+    }
+
+    fun getProjectDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfProject =
+                    CustomTitle.rfiDB.projectDao()
+                        .getAllProjects(RfiDatabase.selectedClientId) as ArrayList<ProjectTableModel>
+                if (listOfProject.size != 0) {
+                    listOfProject.add(0, ProjectTableModel(PK_Scheme_ID = "", Scheme_Name = "Select Project"))
+                }
+                val count = listOfProject.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getProjectDataFromDB: count: $count ")
+                _lvProjectData.postValue(count)
+            } catch (e: Exception) {
+                Log.d(TAG, "${RFIRoomDb.TAG} - getProjectDataFromDB: Exception, ", e)
+            }
+        }
+    }
+
+
+    fun getStructureDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfStructure =
+                    CustomTitle.rfiDB.structureDao().getAllStructure(
+                        RfiDatabase.selectedSchemeId,
+                        RfiDatabase.selectedWorkTypeId
+                    ) as ArrayList<StructureTableModel>
+                if (listOfStructure.size != 0) {
+                    listOfStructure.add(0, StructureTableModel(Bldg_ID = "", Bldg_Name = "Select Structure"))
+                }
+                val count = listOfStructure.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: count: $count ")
+                _lvStructureData.postValue(count)
+            } catch (e: Exception) {
+                Log.e(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: Exception: ", e)
             }
         }
     }

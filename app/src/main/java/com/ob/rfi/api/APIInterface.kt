@@ -76,4 +76,28 @@ interface APIInterface {
         @Path("structureId") structureId: String,
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<ResponseBody>
+
+    @GET("unitRfi/getUnitsWithChecklistId/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{checkListId}/{stageId}")
+   suspend fun getUnitsApi(
+        @Path("userID") userId: Int,
+        @Path("userRole") userRole: String,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("workSeqType") workTypeSeq: String,
+        @Path("checkListId") checkListId: String,
+        @Path("stageId") stageId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
+
+    @GET("SubUnitRfi/getSubUnitWithChecklistId/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{checkListId}/{unitId}")
+   suspend fun getSubUnitsApi(
+        @Path("userID") userId: Int,
+        @Path("userRole") userRole: String,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("workSeqType") workTypeSeq: String,
+        @Path("checkListId") checkListId: String,
+        @Path("unitId") unitId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
 }
