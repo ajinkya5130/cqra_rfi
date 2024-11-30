@@ -26,7 +26,9 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
+import com.ob.database.db_tables.ChecklistTableModel;
 import com.ob.database.db_tables.ClientTableModel;
+import com.ob.database.db_tables.GroupListTableModel;
 import com.ob.database.db_tables.ProjectTableModel;
 import com.ob.database.db_tables.StageTableModel;
 import com.ob.database.db_tables.StructureTableModel;
@@ -256,7 +258,7 @@ public class AllocateTask extends CustomTitle {
                         setSchemeSpinnerData();
                     }else {
                         //updateData();
-                        Log.d(TAG, "observerData: getProjectApi ");
+                        Log.d(TAG, "observerData: getLvProjectData ");
                         viewModel.getProjectApi(31, "Maker");
                     }
                 }
@@ -279,15 +281,45 @@ public class AllocateTask extends CustomTitle {
 
         Objects.requireNonNull(viewModel.getLvStructureData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: getLvWorkTypeData: "+value);
+                    Log.d(TAG, "onCreate: getLvStructureData: "+value);
 
                     if (value!=0){
-                        Log.d(TAG, "observerData: getLvWorkTypeData");
+                        Log.d(TAG, "observerData: getLvStructureData");
                         setBuildingSpinnerData();
                     }else {
                         //updateData();
-                        Log.d(TAG, "observerData: getLvWorkTypeData ");
+                        Log.d(TAG, "observerData: getLvStructureData ");
                         viewModel.getStructureApi(31, "Maker");
+                    }
+                }
+        );
+
+        Objects.requireNonNull(viewModel.getLvCheckListData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvCheckListData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: setCheckListSpinnerData");
+                        setCheckListSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvWorkTypeData ");
+                        viewModel.getCheckListApi(31, "Maker");
+                    }
+                }
+        );
+
+        Objects.requireNonNull(viewModel.getLvGroupListData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvGroupListData: "+value);
+
+                    if (value!=0){
+                        Log.d(TAG, "observerData: setCheckListSpinnerData");
+                        setGroupSpinnerData();
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvWorkTypeData ");
+                        viewModel.getGroupListApi(31, "Maker");
                     }
                 }
         );
@@ -323,6 +355,15 @@ public class AllocateTask extends CustomTitle {
     private void resetSpinner(SpinnerType spinnerType) {
         if (spinnerType.equals(SpinnerType.STAGE)){
             setFloorSpinnerData();
+        }
+        else if (spinnerType.equals(SpinnerType.GroupLIST)){
+            setGroupSpinnerData();
+        }
+        else if (spinnerType.equals(SpinnerType.WORK_TYPE)){
+            setWorkTypeSpinnerData();
+        }
+        else if (spinnerType.equals(SpinnerType.CHECKLIST)){
+            setCheckListSpinnerData();
         }
     }
 
@@ -578,7 +619,9 @@ public class AllocateTask extends CustomTitle {
                 if (position > 0) {
                     db.selectedWorkTypeId = wTypeId[position];
                     db.selectedlevelId = wTypeLevelId[position];
+                    db.selectedNodeId = wTypeId[position];
                     viewModel.getStructureDataFromDB();
+                    viewModel.getCheckListDataFromDB();
                 } else {
                     db.selectedWorkTypeId = "";
                     db.selectedBuildingId = "";
@@ -854,34 +897,15 @@ public class AllocateTask extends CustomTitle {
 
     private void setCheckListSpinnerData() {
 
+        ArrayList<ChecklistTableModel> list = viewModel.getListOfCheckList();
+        int size = list.size();
+        String[] items = new String[size];
+        checklistId = new String[size];
 
-        String where = "s.user_id='" + db.userId + "' AND Node_id='"
-                + db.selectedNodeId + "' AND FK_WorkTyp_ID ='"
-                + db.selectedWorkTypeId + "' AND c.user_id=s.user_id ";
-        System.out.println("where ->" + where);
-        Cursor cursor = db.select("CheckList as c,Scheme as s",
-                "distinct(c.Checklist_ID),c.Checklist_Name", where, null, null,
-                null, "c.Checklist_Name");
 
-        // System.out.println("selected scheme id"+db.selectedBuildingId);
-
-        checklistId = new String[cursor.getCount()];
-        String[] items = new String[cursor.getCount() + 1];
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-
-            do {
-                checklistId[cursor.getPosition()] = cursor.getString(0);
-                System.out.println("trade id printed=" + cursor.getString(0));
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-                System.out.println("trade name printed=" + cursor.getString(1));
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "CheckList(s) not available";
-        }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
+        for(int i =0; i<size; i++){
+            checklistId[i] = list.get(i).getChecklist_ID();
+            items[i] = list.get(i).getChecklist_Name();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -894,19 +918,16 @@ public class AllocateTask extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedChecklistId = checklistId[position - 1];
+                    db.selectedChecklistId = checklistId[position];
                     db.selectedChecklistName = checklistspin.getSelectedItem()
                             .toString();
-
-                    method = "getGroup";
-                    param = new String[]{"userID", "userRole", "nodeId",
-                            "checkListId"};
-                    value = new String[]{db.userId, "maker",
-                            db.selectedNodeId, db.selectedChecklistId};
-                    callGroupService(db.selectedNodeId);
+                    //callGroupService(db.selectedNodeId);
+                    viewModel.getGroupListDataFromDB();
                     /*	} */
 
                 } else {
+                    checklistspin.setClickable(true);
+                    checklistspin.setSelection(0);
                     db.selectedChecklistId = "";
                     grouptspin.setClickable(false);
                     grouptspin.setSelection(0);
@@ -921,41 +942,16 @@ public class AllocateTask extends CustomTitle {
         });
     }
 
-    private void setGoupSpinnerData(final String checklistId, String NodeID) {
+    private void setGroupSpinnerData() {
 
-        String where = "c.Checklist_ID='" + checklistId + "' AND g.Node_id='"
-                + /*db.selectedNodeId*/NodeID
-                + "'  AND  g.FK_Checklist_ID=c.Checklist_ID"
-                + " AND c.user_id='" + db.userId
+        ArrayList<GroupListTableModel> list = viewModel.getListOfGroupList();
+        int size = list.size();
+        String[] items = new String[size];
+        groupId = new String[size];
 
-                + "' AND g.user_id=c.user_id ";
-        System.out.println("where ->" + where);
-        Cursor cursor = db.select("Group1 as g,CheckList as c",
-                "distinct(g.Grp_ID),g.Grp_Name,g.Node_id", where, null, null,
-                null, "g.GRP_Sequence_tint");
-
-        // System.out.println("selected scheme id"+db.selectedBuildingId);
-
-        groupId = new String[cursor.getCount()];
-
-        String[] items = new String[cursor.getCount() + 1];
-        items[0] = "--Select--";
-        if (cursor.moveToFirst()) {
-
-            do {
-                groupId[cursor.getPosition()] = cursor.getString(0);
-
-                items[cursor.getPosition() + 1] = cursor.getString(1);
-
-                System.out
-                        .println("goup id==" + cursor.getString(2).toString());
-            } while (cursor.moveToNext());
-        } else {
-            items[0] = "Group(s) not available";
-        }
-
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
+        for(int i =0; i<size; i++){
+            groupId[i] = list.get(i).getGrp_ID();
+            items[i] = list.get(i).getGrp_Name();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -968,11 +964,10 @@ public class AllocateTask extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedGroupId = groupId[position - 1];
-                    System.out.println("Selected Group ID is : "
-                            + db.selectedGroupId);
+                    db.selectedGroupId = groupId[position];
 
-                    if (isQuestionAvailable()) {
+                    // TODO: 30/11/24 get questions api
+                   /* if (isQuestionAvailable()) {
                         System.out
                                 .println("Data Already Available in Question table");
                     } else {
@@ -982,7 +977,7 @@ public class AllocateTask extends CustomTitle {
 						value = new String[] { db.userId, "maker",
 								db.selectedNodeId, db.selectedGroupId };
 						callQuestionService();
-                    }
+                    }*/
 
                 } else {
                     db.selectedGroupId = "";
@@ -1104,7 +1099,7 @@ public class AllocateTask extends CustomTitle {
             subunitspin.setClickable(false);
             if (isDataAvialableInCheckList(db.selectedNodeId,
                     db.selectedWorkTypeId, db.userId)) {
-                setCheckListSpinnerData();
+                //setCheckListSpinnerData();
                 checklistspin.setClickable(true);
                 checklistspin.setSelection(0);
             } else {
@@ -1184,7 +1179,7 @@ public class AllocateTask extends CustomTitle {
             System.out.println("No Data");
             if (isDataAvialableInCheckList(db.selectedNodeId,
                     db.selectedWorkTypeId, db.userId)) {
-                setCheckListSpinnerData();
+                //setCheckListSpinnerData();
                 checklistspin.setClickable(true);
                 checklistspin.setSelection(0);
             } else {
@@ -1229,7 +1224,7 @@ public class AllocateTask extends CustomTitle {
                         "Sufficient Data is not available.");
                 if (isDataAvialableInCheckList(db.selectedNodeId,
                         db.selectedWorkTypeId, db.userId)) {
-                    setCheckListSpinnerData();
+                    //setCheckListSpinnerData();
                     checklistspin.setClickable(true);
                     checklistspin.setSelection(0);
                 } else {
@@ -1294,7 +1289,7 @@ public class AllocateTask extends CustomTitle {
                             + db.userId + "'";
                     db.insert("CheckList", column, values);
                 }
-                setCheckListSpinnerData();
+                //setCheckListSpinnerData();
                 checklistspin.setClickable(true);
                 checklistspin.setSelection(0);
             } catch (Exception e) {
@@ -1369,7 +1364,7 @@ public class AllocateTask extends CustomTitle {
                     groupList.add(group);
                 }
 
-                setGoupSpinnerData(db.selectedChecklistId, NodeID);
+                //setGroupSpinnerData();
                 grouptspin.setClickable(true);
                 grouptspin.setSelection(0);
             } catch (Exception e) {

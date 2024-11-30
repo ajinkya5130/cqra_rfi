@@ -34,23 +34,45 @@ interface APIInterface {
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<WorkTypeResponseModel>
 
-    @GET("StructureRfi/getStructure/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}")
-   suspend fun getStructureApi(
+    @GET("ActivityChecklistSeqRfi/getChecklistsWithoutNodeIdAndroid/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}")
+   suspend fun getCheckListApi(
         @Path("userID") userId: Int,
         @Path("userRole") userRole: String,
         @Path("clientId") clientId: String,
         @Path("projectId") projectId: String,
         @Path("workSeqType") workTypeSeq: String,
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
+
+    @GET("GroupRfiController/getGroupsWithoutUnitIdAndroid/{userID}/{userRole}/{clientId}/{projectId}/{checklistRfiId}")
+   suspend fun getGroupListApi(
+        @Path("userID") userId: Int,
+        @Path("userRole") userRole: String,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("checklistRfiId") checklistRfiId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
+
+    @GET("StructureRfi/getStructuresWithCheclistId/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{checkListId}")
+   suspend fun getStructureApi(
+        @Path("userID") userId: Int,
+        @Path("userRole") userRole: String,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("workSeqType") workTypeSeq: String,
+        @Path("checkListId") checkListId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<StructureResponseModel>
 
-    @GET("stage/getStage/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{structureId}")
+    @GET("stage/getStagesWithChecklistId/{userID}/{userRole}/{clientId}/{projectId}/{workSeqType}/{checkListId}/{structureId}")
    suspend fun getStageApi(
         @Path("userID") userId: Int,
         @Path("userRole") userRole: String,
         @Path("clientId") clientId: String,
         @Path("projectId") projectId: String,
         @Path("workSeqType") workTypeSeq: String,
+        @Path("checkListId") checkListId: String,
         @Path("structureId") structureId: String,
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<ResponseBody>

@@ -1,11 +1,15 @@
 package com.ob.rfi.api
 
+import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
+import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
+import com.ob.rfi.models.ChecklistApiResponseModelItem
 import com.ob.rfi.models.ClientApiResponseModelItem
+import com.ob.rfi.models.GroupListApiResponseModelItem
 import com.ob.rfi.models.Project
 import com.ob.rfi.models.StageApiResponseModelItem
 import com.ob.rfi.models.StructureResponseModelItem
@@ -60,6 +64,33 @@ object ConverterModel {
                 Bldg_Name = model.structureName
                 Build_scheme_id = model.projectId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
+            })
+        }
+        return list
+    }
+
+    fun convertCheckListModel(selectedNodeId:String,checkList: ArrayList<ChecklistApiResponseModelItem>): List<ChecklistTableModel> {
+        val list = ArrayList<ChecklistTableModel>()
+        checkList.forEach { model ->
+            list.add(ChecklistTableModel().apply{
+                //pk_building_id  = model.structureId
+                Checklist_ID = model.chklId.toString()
+                Checklist_Name = model.chklName
+                Node_Id = selectedNodeId
+                FK_WorkTyp_ID = model.activitySeqGroupRfiId.toString()
+            })
+        }
+        return list
+    }
+    fun convertGroupListModel(selectedNodeId:String,checkList: ArrayList<GroupListApiResponseModelItem>): List<GroupListTableModel> {
+        val list = ArrayList<GroupListTableModel>()
+        checkList.forEach { model ->
+            list.add(GroupListTableModel().apply{
+                Grp_ID = model.groupId.toString()
+                Grp_Name = model.groupName
+                Node_id = selectedNodeId
+                FK_Checklist_ID = model.checklistRfiId.toString()
+                GRP_Sequence_tint = model.groupSequence.toString()
             })
         }
         return list
