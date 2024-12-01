@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ob.allocate_task.presentationlayer.AllocateTaskViewModel;
+import com.ob.database.db_tables.AllocateTaskTableModel;
 import com.ob.database.db_tables.ChecklistTableModel;
 import com.ob.database.db_tables.ClientTableModel;
 import com.ob.database.db_tables.GroupListTableModel;
@@ -81,7 +82,7 @@ public class AllocateTask extends CustomTitle {
     private String selected = "";
     private Spinner clientspin;
     private String[] client;
-    private String[] clientId;
+    private Integer[] clientId;
     private Spinner rfiSpin;
     private Spinner projSpin;
     private Spinner clintSpin;
@@ -157,10 +158,10 @@ public class AllocateTask extends CustomTitle {
         backBtn = (Button) findViewById(R.id.question_select_Back);
 
 
-        ResetId();
-        setSpiner();
         viewModel = new ViewModelProvider(this).get(AllocateTaskViewModel.class);
         //RFIRoomDb dbObject = RoomDbObject.INSTANCE.getDbObject(this);
+        ResetId();
+        setSpiner();
         viewModel.getClientData();
 
         db = new RfiDatabase(getApplicationContext());
@@ -178,7 +179,19 @@ public class AllocateTask extends CustomTitle {
             @Override
             public void onClick(View arg0) {
 
-                String table_fields = "Client, Project, WorkType, Structure, Stage, Unit, SubUnit, Element, SubElement, CheckList, GroupColumn, UserID,NodeID";
+                AllocateTaskTableModel model = new AllocateTaskTableModel();
+                model.setCheckListId(viewModel.getClientId());
+                model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
+                model.setCheckListId(Integer.parseInt(db.selectedChecklistId));
+                model.setProjectId(Integer.parseInt(db.selectedBuildingId));
+                model.setStructureId(Integer.parseInt(db.selectedFloorId));
+                model.setGroupId(Integer.parseInt(db.selectedGroupId));
+                model.setUnitId(Integer.parseInt(db.selectedUnitId));
+                model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
+                model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
+                model.setUserId(Integer.parseInt(db.userId));
+                viewModel.insertAllocateTask(model);
+                /*String table_fields = "Client, Project, WorkType, Structure, Stage, Unit, SubUnit, Element, SubElement, CheckList, GroupColumn, UserID,NodeID";
                 String table_values = "'" + db.selectedClientId + "','"
                         + db.selectedSchemeId + "','" + db.selectedWorkTypeId
                         + "','" + db.selectedBuildingId + "','"
@@ -211,11 +224,11 @@ public class AllocateTask extends CustomTitle {
 
                 db.insert("Rfi_New_Create", "FK_rfi_Id,user_id", "'" + value + "','" + db.userId + "'");
 
-
+*/
                 if (validateScreen()) {
                     displayErrorDialog("Error", errorMessage);
 
-                } else if (isQuestionAvailable()) {
+                } else if (viewModel.getListOfQuestions().size() != 1/*isQuestionAvailable()*/) {
                     if (db.selectedScrollStatus.equalsIgnoreCase("true")) {
                         Intent int1 = new Intent(AllocateTask.this,
                                 HomeScreen.class);
@@ -371,6 +384,20 @@ public class AllocateTask extends CustomTitle {
                 }
         );
 
+        Objects.requireNonNull(viewModel.getLvQuestionsData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: getLvQuestionsData: "+value);
+                    if (value!=0){
+                        Log.d(TAG, "observerData: getLvQuestionsData");
+                        displayErrorDialog("Questions","Questions are available");
+                    }else {
+                        //updateData();
+                        Log.d(TAG, "observerData: getLvQuestionsData ");
+                        viewModel.getQuestionsApi(31);
+                    }
+                }
+        );
+
         Objects.requireNonNull(viewModel.getLvErrorData()).observe(
                 this, value ->{
                     Log.d(TAG, "onCreate: getLvStageData: "+value);
@@ -480,7 +507,7 @@ public class AllocateTask extends CustomTitle {
         db.selectedTradeId = "";
         db.selectedSupervisorId = "";
         db.selectedForemanId = "";
-        db.selectedClientId = "";
+        viewModel.setClientId(0);
         db.selectedScrollStatus = "";
 
     }
@@ -534,11 +561,11 @@ public class AllocateTask extends CustomTitle {
 
         ArrayList<ClientTableModel> list = viewModel.getList();
         int size = list.size();
-        clientId = new String[size];
+        clientId = new Integer[size];
         client = new String[size];
         for(int i =0; i<size; i++){
-            client[i] = list.get(i).getClnt_Name();
-            clientId[i] = list.get(i).getClient_ID();
+            client[i] = list.get(i).getClientName();
+            clientId[i] = list.get(i).getClientId();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -556,7 +583,7 @@ public class AllocateTask extends CustomTitle {
                 if (position >= 1) {
                     db.selectedclientname = clintSpin.getSelectedItem()
                             .toString();
-                    db.selectedClientId = clientId[position];
+                    viewModel.setClientId(clientId[position]);
                     viewModel.getProjectDataFromDB();
                     worktypeSpin.setSelection(0);
                     worktypeSpin.setClickable(false);
@@ -567,7 +594,7 @@ public class AllocateTask extends CustomTitle {
                     worktypeSpin.setClickable(false);
                     projSpin.setSelection(1);//changed by pramod
                     projSpin.setClickable(false);
-                    db.selectedClientId = "";
+                    viewModel.setClientId(0);
                     db.selectedclientname = clintSpin.getSelectedItem()
                             .toString();
                 }
@@ -661,7 +688,7 @@ public class AllocateTask extends CustomTitle {
                     db.selectedNodeId = wTypeId[position];
                     structureSpin.setClickable(true);
                     structureSpin.setSelection(0);
-                    viewModel.getStructureDataFromDB();
+
                     viewModel.getCheckListDataFromDB();
                 } else {
                     db.selectedWorkTypeId = "";
@@ -878,6 +905,7 @@ public class AllocateTask extends CustomTitle {
                     db.selectedNodeId = subunitId[position];
 
                 } else {
+                    db.selectedSubUnitId = "0";
                     System.out.println("hello sub unit else");
                 }
             }
@@ -939,6 +967,7 @@ public class AllocateTask extends CustomTitle {
                     db.selectedChecklistName = checklistspin.getSelectedItem()
                             .toString();
                     //callGroupService(db.selectedNodeId);
+                    viewModel.getStructureDataFromDB();
                     viewModel.getGroupListDataFromDB();
                     /*	} */
 
@@ -982,7 +1011,7 @@ public class AllocateTask extends CustomTitle {
                                        int position, long rowid) {
                 if (position > 0) {
                     db.selectedGroupId = groupId[position];
-
+                    viewModel.getQuestionsDataFromDB();
                     // TODO: 30/11/24 get questions api
                    /* if (isQuestionAvailable()) {
                         System.out
@@ -1703,7 +1732,7 @@ public class AllocateTask extends CustomTitle {
     }
 
     public void ResetId() {
-        db.selectedClientId = "";
+        viewModel.setClientId(0);
         db.selectedSchemeId = "";
         db.selectedWorkTypeId = "";
         db.selectedBuildingId = "";
@@ -1720,7 +1749,7 @@ public class AllocateTask extends CustomTitle {
         db.selectedSchemeId = "";
         db.selectedSchemeName = "";
         db.selectedclientname = "";
-        db.selectedClientId = "";
+        viewModel.setClientId(0);
         db.selectedBuildingId = "";
         db.selectedFloorId = "";
         db.selectedUnitId = "";

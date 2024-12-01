@@ -6,10 +6,10 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "Client")
 data class ClientTableModel (
     @PrimaryKey(autoGenerate = true)
-    var pk_client_id: Int = 0,
-    var Client_ID: String = "",
-    var Clnt_Name: String ="",
-    var CL_Dispaly_Name: String="",
-    var Clnt_Adrs: String="",
-    var user_id: String=""
+    var pkClientId: Int = 0,
+    var clientId: Int = 0,
+    var clientName: String ="",
+    var clientDisplay: String="",
+    var clientAddress: String="",
+    var userId: Int=0
 )

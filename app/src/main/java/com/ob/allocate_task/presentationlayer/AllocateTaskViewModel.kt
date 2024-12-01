@@ -6,13 +6,16 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.ob.AppUtil.Int_NO_DATA_AVAILABLE_VAL
 import com.ob.AppUtil.NO_DATA_AVAILABLE
 import com.ob.AppUtil.NO_DATA_AVAILABLE_VAL
 import com.ob.database.RFIRoomDb
+import com.ob.database.db_tables.AllocateTaskTableModel
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.SubUnitTableModel
@@ -25,6 +28,7 @@ import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.models.APIErrorModel
 import com.ob.rfi.models.ChecklistApiResponseModel
 import com.ob.rfi.models.GroupListApiResponseModel
+import com.ob.rfi.models.QuestionsApiResponseModel
 import com.ob.rfi.models.SpinnerType
 import com.ob.rfi.models.StageApiResponseModel
 import com.ob.rfi.models.SubUnitListApiResponseModel
@@ -35,6 +39,7 @@ import okhttp3.ResponseBody
 import java.net.HttpURLConnection
 
 class AllocateTaskViewModel : ViewModel() {
+    var clientId:Int = 0
     var lvClientData: LiveData<Int>? = null
     private val _lvClientData = MutableLiveData<Int>()
 
@@ -62,6 +67,9 @@ class AllocateTaskViewModel : ViewModel() {
     var lvSubUnitData: LiveData<Int>
     private val _lvSubUnitData = MutableLiveData<Int>()
 
+    var lvQuestionsData: LiveData<Int>
+    private val _lvQuestionsData = MutableLiveData<Int>()
+
     var lvErrorData: LiveData<APIErrorModel>
     private val _lvErrorData = MutableLiveData<APIErrorModel>()
 
@@ -74,6 +82,7 @@ class AllocateTaskViewModel : ViewModel() {
     var listOfGroupList = arrayListOf<GroupListTableModel>()
     var listOfUnitList = arrayListOf<UnitTableModel>()
     var listOfSubUnitList = arrayListOf<SubUnitTableModel>()
+    var listOfQuestions = arrayListOf<QuestionsTableModel>()
 
     init {
         lvClientData = _lvClientData
@@ -85,6 +94,7 @@ class AllocateTaskViewModel : ViewModel() {
         lvStageData = _lvStageData
         lvUnitData = _lvUnitData
         lvSubUnitData = _lvSubUnitData
+        lvQuestionsData = _lvQuestionsData
         lvErrorData = _lvErrorData
     }
 
@@ -107,8 +117,8 @@ class AllocateTaskViewModel : ViewModel() {
                         list.add(
                             0,
                             ClientTableModel(
-                                Clnt_Name = NO_DATA_AVAILABLE,
-                                Client_ID = NO_DATA_AVAILABLE_VAL
+                                clientName = NO_DATA_AVAILABLE,
+                                clientId = Int_NO_DATA_AVAILABLE_VAL
                             )
                         )
                         _lvClientData.postValue(1)
@@ -210,7 +220,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getStructureApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedWorkTypeId,
                 RfiDatabase.selectedChecklistId,
@@ -258,7 +268,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getCheckListApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedWorkTypeId
             )
@@ -317,7 +327,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getGroupListApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedChecklistId
             )
@@ -378,7 +388,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getStageApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedWorkTypeId,
                 RfiDatabase.selectedChecklistId,
@@ -439,7 +449,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getUnitsApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedWorkTypeId,
                 RfiDatabase.selectedChecklistId,
@@ -495,7 +505,7 @@ class AllocateTaskViewModel : ViewModel() {
             val response = APIClient.getAPIInterface().getSubUnitsApi(
                 rollName,
                 userRole,
-                RfiDatabase.selectedClientId,
+                clientId.toString(),
                 RfiDatabase.selectedSchemeId,
                 RfiDatabase.selectedWorkTypeId,
                 RfiDatabase.selectedChecklistId,
@@ -537,6 +547,59 @@ class AllocateTaskViewModel : ViewModel() {
                         "Something is wrong while fetching Sub Unit Data, Please try again!"
                     model.spinnerType = SpinnerType.SUB_UNIT_LIST
                     listOfStage = arrayListOf()
+                    _lvErrorData.postValue(model)
+                    Log.e(TAG, "getSubUnitApi: Error model : $model")
+                //}
+
+            }
+
+        }
+    }
+
+    fun getQuestionsApi(rollName: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = APIClient.getAPIInterface().getQuestionsApi(
+                rollName,
+                clientId.toString(),
+                RfiDatabase.selectedSchemeId,
+                RfiDatabase.selectedGroupId,
+            )
+            if (response.isSuccessful && response.code() == HttpURLConnection.HTTP_OK) {
+                val responseBody: ResponseBody = response.body()!!
+                responseBody.let {
+                    try {
+                        val model =
+                            Gson().fromJson(it.string(), QuestionsApiResponseModel::class.java)
+                        Log.d(TAG, "getQuestionsApi: response: $model")
+                        if (model.isEmpty()) {
+                            listOfQuestions.clear()
+                            listOfQuestions.add(
+                                0,
+                                QuestionsTableModel(
+                                    question = NO_DATA_AVAILABLE,
+                                    questionId = NO_DATA_AVAILABLE_VAL.toInt()
+                                )
+                            )
+                            _lvQuestionsData.postValue(1)
+                        } else {
+                            val dbModel = ConverterModel.convertQuestionsModel(model,
+                                RfiDatabase.selectedBuildingId)
+                            CustomTitle.rfiDB.questionsDao().insertAll(dbModel)
+                            getQuestionsDataFromDB()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "getQuestionsApi: Exception: ", e)
+                    }
+                }
+
+            } else {
+                //Log.e(TAG, "getSubUnitApi: response: ${response.errorBody()}")
+                //response.errorBody()?.let {
+                    val model = APIErrorModel()
+                    model.message =
+                        "Something is wrong while fetching Questions Data, Please try again!"
+                    model.spinnerType = SpinnerType.QUESTIONS_LIST
+                    listOfQuestions = arrayListOf()
                     _lvErrorData.postValue(model)
                     Log.e(TAG, "getSubUnitApi: Error model : $model")
                 //}
@@ -626,6 +689,36 @@ class AllocateTaskViewModel : ViewModel() {
                     )
                 )
                 Log.e(TAG, "${RFIRoomDb.TAG} - getSubUnitListDataFromDB: Exception: ", e)
+            }
+        }
+    }
+
+    fun getQuestionsDataFromDB() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfQuestions =
+                    CustomTitle.rfiDB.questionsDao().getAllQuestionsList(
+                        clientId.toString(),
+                        RfiDatabase.selectedSchemeId,
+                        RfiDatabase.selectedGroupId
+                    ) as ArrayList<QuestionsTableModel>
+                if (listOfQuestions.size != 0) {
+                    listOfQuestions.add(
+                        0,
+                        QuestionsTableModel(question = "Select Question", questionId = 0)
+                    )
+                }
+                val count = listOfQuestions.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - getQuestionsDataFromDB: count: $count ")
+                _lvQuestionsData.postValue(count)
+            } catch (e: Exception) {
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Questions List Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.QUESTIONS_LIST
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getQuestionsDataFromDB: Exception: ", e)
             }
         }
     }
@@ -721,7 +814,7 @@ class AllocateTaskViewModel : ViewModel() {
             try {
                 list = CustomTitle.rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
                 if (list.size != 0) {
-                    list.add(0, ClientTableModel(Client_ID = "", Clnt_Name = "Select Client"))
+                    list.add(0, ClientTableModel(clientId = 0, clientName = "Select Client"))
                 }
                 val count = list.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getClientData: count: $count ")
@@ -738,7 +831,7 @@ class AllocateTaskViewModel : ViewModel() {
             try {
                 listOfProject =
                     CustomTitle.rfiDB.projectDao()
-                        .getAllProjects(RfiDatabase.selectedClientId) as ArrayList<ProjectTableModel>
+                        .getAllProjects(clientId.toString()) as ArrayList<ProjectTableModel>
                 if (listOfProject.size != 0) {
                     listOfProject.add(0, ProjectTableModel(PK_Scheme_ID = "", Scheme_Name = "Select Project"))
                 }
@@ -770,5 +863,12 @@ class AllocateTaskViewModel : ViewModel() {
                 Log.e(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: Exception: ", e)
             }
         }
+    }
+
+    fun insertAllocateTask(model: AllocateTaskTableModel) {
+        viewModelScope.launch(Dispatchers.IO) {
+            CustomTitle.rfiDB.allocateTaskDao().insert(model)
+        }
+
     }
 }

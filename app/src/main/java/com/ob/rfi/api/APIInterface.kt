@@ -100,4 +100,13 @@ interface APIInterface {
         @Path("unitId") unitId: String,
         @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
     ): Response<ResponseBody>
+
+    @GET("QuestionRfi/getQuestionsWithoutNodeId/{userID}/{clientId}/{projectId}/{groupId}")
+   suspend fun getQuestionsApi(
+        @Path("userID") userId: Int,
+        @Path("clientId") clientId: String,
+        @Path("projectId") projectId: String,
+        @Path("groupId") groupId: String,
+        @Header("Authorization") authHeader: String = "${AppUtil.BEARER_STRING_CONST} ${AppUtil.FIREBASE_AUTH_TOKEN}"
+    ): Response<ResponseBody>
 }

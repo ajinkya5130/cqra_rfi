@@ -24,4 +24,5 @@ enum class SpinnerType(int: Int){
     GROUP_LIST(7),
     UNIT_LIST(8),
     SUB_UNIT_LIST(9),
+    QUESTIONS_LIST(10),
 }

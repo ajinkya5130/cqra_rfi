@@ -5,19 +5,26 @@ import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.ob.database.RFIRoomDb.Companion.TAG
+import com.ob.database.dao.AllocateTaskDao
 import com.ob.database.dao.CheckListDao
 import com.ob.database.dao.ClientDao
 import com.ob.database.dao.GroupListDao
 import com.ob.database.dao.ProjectDao
+import com.ob.database.dao.QuestionsDao
 import com.ob.database.dao.StageDao
 import com.ob.database.dao.StructureDao
 import com.ob.database.dao.SubUnitDao
 import com.ob.database.dao.UnitDao
 import com.ob.database.dao.WorkTypeDao
+import com.ob.database.db_tables.AllocateTaskTableModel
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.SubUnitTableModel
@@ -36,6 +43,8 @@ import java.util.concurrent.Executors
     StageTableModel::class,
     UnitTableModel::class,
     SubUnitTableModel::class,
+    QuestionsTableModel::class,
+    AllocateTaskTableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -52,6 +61,8 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun stageDao(): StageDao
     abstract fun unitDao(): UnitDao
     abstract fun subUnitDao(): SubUnitDao
+    abstract fun questionsDao(): QuestionsDao
+    abstract fun allocateTaskDao(): AllocateTaskDao
 
     companion object {
         const val TAG = "RFIRoomDb"
@@ -66,7 +77,7 @@ abstract class RFIRoomDb : RoomDatabase() {
                             sqlQuery, bindArgs ->
                         Log.i(TAG, "SQL Query: $sqlQuery SQL Args: $bindArgs")
                     },Executors.newSingleThreadExecutor())
-                    //.addMigrations(MIGRATION_13_14)
+                    //.addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance
@@ -75,12 +86,11 @@ abstract class RFIRoomDb : RoomDatabase() {
     }
 }
 
-/*val MIGRATION_13_14 = object : Migration(14, 15) {
+val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         Log.d(TAG, "migrate: version- ${db.version}, Path - ${db.path}")
         db.execSQL(
-            "CREATE TABLE IF NOT EXISTS `WorkTypeSeq` (`workTypeId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `activitySequenceGroupId` INTEGER NOT NULL, `projectId` INTEGER NOT NULL, `activitySequenceLevel` INTEGER NOT NULL," +
-                    " `activitySequenceStatus` INTEGER NOT NULL, `activitySequenceName` TEXT NOT NULL)"
+            "ALTER TABLE question ADD COLUMN structureId INTEGER"
         )
     }
-}*/
+}

@@ -4,6 +4,7 @@ import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
+import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.StageTableModel
 import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.SubUnitTableModel
@@ -13,6 +14,7 @@ import com.ob.rfi.models.ChecklistApiResponseModelItem
 import com.ob.rfi.models.ClientApiResponseModelItem
 import com.ob.rfi.models.GroupListApiResponseModelItem
 import com.ob.rfi.models.Project
+import com.ob.rfi.models.QuestionsApiResponseModelItem
 import com.ob.rfi.models.StageApiResponseModelItem
 import com.ob.rfi.models.StructureResponseModelItem
 import com.ob.rfi.models.SubUnitListApiResponseModelItem
@@ -23,10 +25,10 @@ object ConverterModel {
 
     fun convertClientData(model: ClientApiResponseModelItem): ClientTableModel {
         val clModel = ClientTableModel().apply {
-            Client_ID = model.clId.toString()
-            Clnt_Name = model.clName
-            CL_Dispaly_Name = model.clDisplayname
-            Clnt_Adrs = model.clAddress
+            clientId = model.clId
+            clientName = model.clName
+            clientDisplay = model.clDisplayname
+            clientAddress = model.clAddress
 
         }
         return clModel
@@ -143,6 +145,28 @@ object ConverterModel {
                 fkWorkTypId = model.activitySequenceGroupRfiId.toString()
                 subUnitSchemeId = model.projectId.toString()
 
+            })
+        }
+        return list
+    }
+
+    fun convertQuestionsModel(
+        listOfStage: ArrayList<QuestionsApiResponseModelItem>,
+        selectedBuildingId: String =""
+    ): List<QuestionsTableModel> {
+        val list = ArrayList<QuestionsTableModel>()
+        listOfStage.forEach { model ->
+            list.add(QuestionsTableModel().apply{
+                questionId = model.questionRfiId
+                question = model.description
+                groupId = model.groupRfiId
+                questionSequence = model.sequenceNo
+                questionType = model.questionType
+                checklistId = model.checklistRfiId
+                nodeId = selectedBuildingId
+                structureId = model.structureRfiId
+                clientId = model.clientId
+                projectId = model.projectId
             })
         }
         return list

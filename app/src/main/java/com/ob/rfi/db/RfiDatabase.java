@@ -41,10 +41,10 @@ public class RfiDatabase {
 	private SQLiteQueryBuilder bb;
 	private SQLiteOpenHelper mOpenHelper;
 	public static String LastSelectedListItem="";
-	public static String selectedSubUnitId="";
+	public static String selectedSubUnitId="0";
 	public static String selectedElementId="";
 	public static String selectedSubElementId=""; 
-	public static String selectedUnitId="";
+	public static String selectedUnitId="0";
 	public static String selectedlevelId="";
 	public static String selectedCoverage="";
 	
@@ -55,21 +55,21 @@ public class RfiDatabase {
 	
 	public static String selectedgroupName="";
 	public static String selectedrfiId="";
-	public static String selectedNodeId="";
+	public static String selectedNodeId="0";
 	
 
 	public static String userId 	= "";
 	public static String userRole = "";  // AKSHAY
-	public static String selectedGroupId 	= "";
+	public static String selectedGroupId 	= "0";
 	public static String selectedGroupName 	= "";
 	public static String selectedRfiName="";
 
-	public static String selectedSchemeId = "";
-	public static String selectedBuildingId = "";
-	public static String selectedWorkTypeId = "";
-	public static String selectedFloorId 	= "";
-	public static String selectedChecklistId = "";
-	public static String selectedSubGroupId = "";
+	public static String selectedSchemeId = "0";
+	public static String selectedBuildingId = "0";
+	public static String selectedWorkTypeId = "0";
+	public static String selectedFloorId 	= "0";
+	public static String selectedChecklistId = "0";
+	public static String selectedSubGroupId = "0";
 	public static String selectedHeadingId 	= "";
 	public static String selectedQuestionId = "";
 	public static String selectedTradeId="";
@@ -381,7 +381,7 @@ public class RfiDatabase {
 			db.execSQL("CREATE TABLE userMaster(Pk_User_ID INTEGER PRIMARY KEY, User_Name TEXT, Password TEXT,user_role TEXT,dashboardroll TEXT)");
 			
 			
-			db.execSQL("CREATE TABLE Client(pk_client_id integer primary key AUTOINCREMENT, Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT,Clnt_Adrs TEXT, user_id TEXT)");
+			db.execSQL("CREATE TABLE Client(pkClientId integer primary key AUTOINCREMENT, clientId integer,clientName TEXT,clientDisplay TEXT,clientAddress TEXT, userId integer)");
 			
 			db.execSQL("CREATE TABLE Scheme(scheme_id integer primary key AUTOINCREMENT, PK_Scheme_ID TEXT,Scheme_Name TEXT,Scheme_Cl_Id TEXT,Scheme_Diplay_Name TEXT,Scheme_Adrs TEXT," +
 					"Scheme_Region TEXT,scrolling_status TEXT, user_id TEXT)");
@@ -406,8 +406,8 @@ public class RfiDatabase {
 			
 		 
 			
-			db.execSQL("CREATE TABLE question(_id integer primary key AUTOINCREMENT,PK_question_id TEXT, QUE_Des TEXT, " +
-					"QUE_SequenceNo Text,QUE_Type TEXT, NODE_Id TEXT, Fk_CHKL_Id TEXT, Fk_Grp_ID TEXT,user_id TEXT)");
+			db.execSQL("CREATE TABLE question(_id integer primary key AUTOINCREMENT,questionId integer, question TEXT, " +
+					"questionSequence integer, questionType TEXT, nodeId TEXT, checklistId integer, structureId integer, clientId integer, projectId integer, groupId integer, userId integer)");
 			
 			 
 			
@@ -476,9 +476,10 @@ public class RfiDatabase {
 			
 			
 			db.execSQL("CREATE TABLE CancelRFI(_id integer primary key AUTOINCREMENT,RFI_ID TEXT,Remark TEXT,User_ID TEXT)");
-			
-			db.execSQL("CREATE TABLE AllocateTask(Client TEXT,Project TEXT,WorkType TEXT,Structure TEXT,Stage TEXT,Unit TEXT,SubUnit TEXT,Element TEXT," +
-					"SubElement TEXT,CheckList TEXT,GroupColumn TEXT,UserID TEXT,NodeID TEXT)");
+
+
+			db.execSQL("CREATE TABLE allocateTask(_id integer primary key AUTOINCREMENT,clientId integer,projectId integer,workTypeId integer,structureId integer,stageId integer," +
+					"unitId integer,subUnitId integer,checkListId integer,groupId integer,activitySequenceId integer,userId integer)");
 
 
 			db.execSQL("CREATE TABLE RfiNotification (notifId INTEGER PRIMARY KEY AUTOINCREMENT, notifText TEXT,user_id TEXT)");
@@ -491,8 +492,7 @@ public class RfiDatabase {
 			db.execSQL("CREATE TABLE WorkTypeSeq (workTypeId integer PRIMARY KEY AUTOINCREMENT, activitySequenceGroupId INTEGER NOT NULL, projectId INTEGER NOT NULL, activitySequenceLevel INTEGER NOT NULL," +
 					"activitySequenceStatus INTEGER NOT NULL, activitySequenceName TEXT NOT NULL)");
 
-
-		/*	
+		/*
 			RFI_Id~CL_Id~PRJ_Id~NODE_Id~Level_int~CHKL_Id~GRP_Id~USER_Id~StructureId~StageId~UnitId~SubUnitId~ElementId~SubElementId~
 			RFICreatedOn_date~Coverage~QUE_Id~Answer~Remark~ImagePath1~imagePath2~Status~enterByUserId~detailCreatedOn_date~CheckedByUserId~DetailCheckedOn_date~|$
 		*/	
@@ -503,7 +503,7 @@ public class RfiDatabase {
 		
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			db.execSQL("DROP TABLE IF EXISTS " + "userMaster");
+			/*db.execSQL("DROP TABLE IF EXISTS " + "userMaster");
 			db.execSQL("DROP TABLE IF EXISTS " + "question");
 			db.execSQL("DROP TABLE IF EXISTS " + "Client");
 			db.execSQL("DROP TABLE IF EXISTS " + "Scheme");
@@ -533,7 +533,7 @@ public class RfiDatabase {
 			db.execSQL("DROP TABLE IF EXISTS " + "Rfi_check");
 			db.execSQL("DROP TABLE IF EXISTS " + "Answer");
 			db.execSQL("DROP TABLE IF EXISTS " + "ApproverDetails");
-			db.execSQL("DROP TABLE IF EXISTS " + "RfiNotification");
+			db.execSQL("DROP TABLE IF EXISTS " + "RfiNotification");*/
 
 			//db.delete("Answer", null, null);
 
@@ -545,7 +545,7 @@ public class RfiDatabase {
             } catch (SQLException e) {
 				Log.e("RFI_DB", "onUpgrade: SQLException: ",e );
             }*/
-            onCreate(db);
+            //onCreate(db);
 		}
 	}
 

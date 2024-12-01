@@ -145,13 +145,13 @@
                     android:layout_marginLeft="20dp"
                     android:layout_weight="4"
                     android:gravity="center_vertical"
-                    android:text="Group"
+                    android:text="Structure"
 
                     android:textColor="#FFFFFF"
                     android:textStyle="bold" />
 
                 <Spinner
-                    android:id="@+id/rfi_group_id"
+                    android:id="@+id/rfi_structure_id"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -159,7 +159,6 @@
                     android:layout_marginRight="20dp"
                     android:layout_weight="2" />
             </LinearLayout>
-
 
             <LinearLayout
                 android:layout_width="fill_parent"
@@ -174,13 +173,13 @@
                     android:layout_marginLeft="20dp"
                     android:layout_weight="4"
                     android:gravity="center_vertical"
-                    android:text="Structure"
+                    android:text="Group"
 
                     android:textColor="#FFFFFF"
                     android:textStyle="bold" />
 
                 <Spinner
-                    android:id="@+id/rfi_structure_id"
+                    android:id="@+id/rfi_group_id"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
