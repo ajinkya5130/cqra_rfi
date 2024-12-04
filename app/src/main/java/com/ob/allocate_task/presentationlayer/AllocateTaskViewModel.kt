@@ -131,6 +131,20 @@ class AllocateTaskViewModel : ViewModel() {
 
             } else {
                 Log.e(TAG, "getClientProjectWorkType: response: ${response.errorBody()}")
+                response.errorBody()?.let {
+                    val value = it.string()
+                    Log.e(TAG, "getClientAPi: Error response: $value")
+                    var model = APIErrorModel()
+                    if (value.isNotEmpty()){
+                        model = Gson().fromJson(value, APIErrorModel::class.java)
+                    }
+                    model.message =
+                        "Something is wrong while fetching Client Data, Please try again!, errorCode: ${response.code()}"
+                    model.spinnerType = SpinnerType.CLIENT
+                    list = arrayListOf()
+                    _lvErrorData.postValue(model)
+                    Log.e(TAG, "getClientAPi: Error model : $model")
+                }
             }
 
         }
@@ -166,6 +180,20 @@ class AllocateTaskViewModel : ViewModel() {
 
             } else {
                 Log.e(TAG, "getProjectApi: response: ${response.errorBody()}")
+                response.errorBody()?.let {
+                    val value = it.string()
+                    Log.e(TAG, "getProjectApi: Error response: $value")
+                    var model = APIErrorModel()
+                    if (value.isNotEmpty()){
+                        model = Gson().fromJson(value, APIErrorModel::class.java)
+                    }
+                    model.message =
+                        "Something is wrong while fetching Project Data, Please try again!, errorcode: ${response.code()}"
+                    model.spinnerType = SpinnerType.PROJECT
+                    listOfProject = arrayListOf()
+                    _lvErrorData.postValue(model)
+                    Log.e(TAG, "getProjectApi: Error model : $model")
+                }
             }
 
         }
@@ -522,10 +550,21 @@ class AllocateTaskViewModel : ViewModel() {
                         if (it.isEmpty()) {
                             listOfSubUnitList.clear()
                             listOfSubUnitList.add(
-                                0,
                                 SubUnitTableModel(
-                                    subUnitName = NO_DATA_AVAILABLE,
-                                    subUnitId = NO_DATA_AVAILABLE_VAL
+                                    subUnitName = "$NO_DATA_AVAILABLE 1",
+                                    subUnitId = "1"
+                                )
+                            )
+                            listOfSubUnitList.add(
+                                SubUnitTableModel(
+                                    subUnitName = "$NO_DATA_AVAILABLE 2",
+                                    subUnitId = "2"
+                                )
+                            )
+                            listOfSubUnitList.add(
+                                SubUnitTableModel(
+                                    subUnitName = "$NO_DATA_AVAILABLE 3",
+                                    subUnitId = "3"
                                 )
                             )
                             _lvSubUnitData.postValue(1)

@@ -20,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -45,6 +46,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("static-access")
@@ -89,7 +92,7 @@ public class AllocateTask extends CustomTitle {
     private Spinner structureSpin;
     private Spinner stageSpin;
     private Spinner unitSpin;
-    private Spinner subunitspin;
+    private TextView subunitspin;
 
     private Spinner grouptspin;
     private Spinner coverageSpinner;
@@ -147,7 +150,7 @@ public class AllocateTask extends CustomTitle {
         structureSpin = (Spinner) findViewById(R.id.rfi_structure_id);
         stageSpin = (Spinner) findViewById(R.id.rfi_statge_id);
         unitSpin = (Spinner) findViewById(R.id.rfi_unit_id);
-        subunitspin = (Spinner) findViewById(R.id.rfi_sub_unit_id);
+        subunitspin = findViewById(R.id.rfi_sub_unit_id);
         checklistspin = (Spinner) findViewById(R.id.rfi_checklist_id);
         grouptspin = (Spinner) findViewById(R.id.rfi_group_id);
 
@@ -179,18 +182,23 @@ public class AllocateTask extends CustomTitle {
             @Override
             public void onClick(View arg0) {
 
-                AllocateTaskTableModel model = new AllocateTaskTableModel();
-                model.setCheckListId(viewModel.getClientId());
-                model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
-                model.setCheckListId(Integer.parseInt(db.selectedChecklistId));
-                model.setProjectId(Integer.parseInt(db.selectedBuildingId));
-                model.setStructureId(Integer.parseInt(db.selectedFloorId));
-                model.setGroupId(Integer.parseInt(db.selectedGroupId));
-                model.setUnitId(Integer.parseInt(db.selectedUnitId));
-                model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
-                model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
-                model.setUserId(Integer.parseInt(db.userId));
-                viewModel.insertAllocateTask(model);
+                try {
+                    AllocateTaskTableModel model = new AllocateTaskTableModel();
+                    model.setCheckListId(viewModel.getClientId());
+                    model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
+                    model.setCheckListId(Integer.parseInt(db.selectedChecklistId));
+                    model.setProjectId(Integer.parseInt(db.selectedBuildingId));
+                    model.setStructureId(Integer.parseInt(db.selectedFloorId));
+                    model.setGroupId(Integer.parseInt(db.selectedGroupId));
+                    model.setUnitId(Integer.parseInt(db.selectedUnitId));
+                    model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
+                    model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
+                    model.setUserId(Integer.parseInt(db.userId));
+                    viewModel.insertAllocateTask(model);
+                } catch (NumberFormatException e) {
+                    Log.d(TAG, "onClick: NumberFormatException: ",e);
+                    //throw new RuntimeException(e);
+                }
                 /*String table_fields = "Client, Project, WorkType, Structure, Stage, Unit, SubUnit, Element, SubElement, CheckList, GroupColumn, UserID,NodeID";
                 String table_values = "'" + db.selectedClientId + "','"
                         + db.selectedSchemeId + "','" + db.selectedWorkTypeId
@@ -408,8 +416,14 @@ public class AllocateTask extends CustomTitle {
     }
 
     private void resetSpinner(SpinnerType spinnerType) {
+        if (spinnerType.equals(SpinnerType.CLIENT)){
+            setClientData();
+        }
         if (spinnerType.equals(SpinnerType.STAGE)){
             setFloorSpinnerData();
+        }
+        if (spinnerType.equals(SpinnerType.PROJECT)){
+            setSchemeSpinnerData();
         }
         else if (spinnerType.equals(SpinnerType.GROUP_LIST)){
             setGroupSpinnerData();
@@ -484,7 +498,7 @@ public class AllocateTask extends CustomTitle {
             structureSpin.setSelection(0);
             stageSpin.setSelection(0);
             unitSpin.setSelection(0);
-            subunitspin.setSelection(0);
+            subunitspin.setText("");
             checklistspin.setSelection(0);
             grouptspin.setSelection(0);
             db.setSpinner = false;
@@ -555,9 +569,6 @@ public class AllocateTask extends CustomTitle {
 
     // /---client
     private void setClientData() {
-
-        insertFlag = false;
-
 
         ArrayList<ClientTableModel> list = viewModel.getList();
         int size = list.size();
@@ -648,7 +659,7 @@ public class AllocateTask extends CustomTitle {
                     checklistspin.setSelection(0);
                     stageSpin.setSelection(0);
                     unitSpin.setSelection(0);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
 
                 }
             }
@@ -699,7 +710,7 @@ public class AllocateTask extends CustomTitle {
                     checklistspin.setSelection(0);
                     stageSpin.setSelection(0);
                     unitSpin.setSelection(0);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
                 }
             }
 
@@ -741,7 +752,7 @@ public class AllocateTask extends CustomTitle {
                     unitSpin.setClickable(false);
                     unitSpin.setSelection(0);
                     subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
 
                     db.selectedBuildingId = "";
                     db.selectedSubGroupId = "";
@@ -807,7 +818,7 @@ public class AllocateTask extends CustomTitle {
                     unitSpin.setSelection(0);
 
                     subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
                 }
             }
 
@@ -848,14 +859,14 @@ public class AllocateTask extends CustomTitle {
                     db.selectedNodeId = unitId[position];
                     viewModel.getSubUnitListDataFromDB();
                     subunitspin.setClickable(true);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
 
                     /*if (isDataAvialableForID("SubUnit", "FK_Unit_ID",
                             db.selectedUnitId)) {
                         setSubUnitSpinnerData(db.selectedUnitId,
                                 db.selectedSchemeId);
                         subunitspin.setClickable(true);
-                        subunitspin.setSelection(0);
+                        subunitspin.setText("");
                     } else {
                         method = "getSubUnit";
                         param = new String[]{"userID", "userRole",
@@ -868,7 +879,7 @@ public class AllocateTask extends CustomTitle {
 
                 } else {
                     subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
+                    subunitspin.setText("");
                     System.out.println("hello else unit");
                 }
             }
@@ -884,18 +895,63 @@ public class AllocateTask extends CustomTitle {
         int size = list.size();
         String[] items = new String[size];
         subunitId = new String[size];
+        final boolean[] checkedItems = new boolean[size];
 
         for(int i =0; i<size; i++){
             subunitId[i] = list.get(i).getSubUnitId();
             items[i] = list.get(i).getSubUnitName();
         }
+        final List<String> selectedItems = Arrays.asList(items);
+        subunitspin.setOnClickListener(view -> {
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+            // initialise the alert dialog builder
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+            // set the title for the alert dialog
+            builder.setTitle("Select Sub Unit");
+
+            // now this is the function which sets the alert dialog for multiple item selection ready
+            builder.setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> {
+                checkedItems[which] = isChecked;
+                String currentItem = selectedItems.get(which);
+            });
+
+            // alert dialog shouldn't be cancellable
+            builder.setCancelable(false);
+
+            // handle the positive button of the dialog
+            builder.setPositiveButton("Done", (dialog, which) -> {
+                for (int i = 0; i < checkedItems.length; i++) {
+                    if (checkedItems[i]) {
+                        Log.d(TAG, "setSubUnitSpinnerData: "+(selectedItems.get(i)));
+                       // tvSelectedItemsPreview.setText(String.format("%s%s, ", tvSelectedItemsPreview.getText(), selectedItems.get(i)));
+                    }
+                }
+            });
+
+            // handle the negative button of the alert dialog
+            builder.setNegativeButton("CANCEL", (dialog, which) -> {});
+
+            // handle the neutral button of the dialog to clear the selected items boolean checkedItem
+            builder.setNeutralButton("CLEAR ALL", (dialog, which) -> {
+                Arrays.fill(checkedItems, false);
+            });
+
+            // create the builder
+            builder.create();
+
+            // create the alert dialog with the alert dialog builder instance
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        });
+
+
+
+    /*ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, items);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_list_item_multiple_choice);
         subunitspin.setAdapter(adapter);
         adapter.notifyDataSetChanged();
-
         subunitspin.setOnItemSelectedListener(new OnItemSelectedListener() {
 
             public void onItemSelected(AdapterView<?> aview, View view,
@@ -912,7 +968,7 @@ public class AllocateTask extends CustomTitle {
 
             public void onNothingSelected(AdapterView<?> arg0) {
             }
-        });
+        });*/
     }
 
 
@@ -1261,7 +1317,7 @@ public class AllocateTask extends CustomTitle {
                 }
                 //setSubUnitSpinnerData(db.selectedUnitId, db.selectedSchemeId);
                 subunitspin.setClickable(true);
-                subunitspin.setSelection(0);
+                subunitspin.setText("");
             } catch (Exception e) {
                 Log.d(TAG, e.toString());
                 e.printStackTrace();
