@@ -39,6 +39,8 @@ import okhttp3.ResponseBody
 import java.net.HttpURLConnection
 
 class AllocateTaskViewModel : ViewModel() {
+    @JvmField
+    var isError: Boolean = false
     var clientId:Int = 0
     var lvClientData: LiveData<Int>? = null
     private val _lvClientData = MutableLiveData<Int>()
@@ -551,20 +553,8 @@ class AllocateTaskViewModel : ViewModel() {
                             listOfSubUnitList.clear()
                             listOfSubUnitList.add(
                                 SubUnitTableModel(
-                                    subUnitName = "$NO_DATA_AVAILABLE 1",
-                                    subUnitId = "1"
-                                )
-                            )
-                            listOfSubUnitList.add(
-                                SubUnitTableModel(
-                                    subUnitName = "$NO_DATA_AVAILABLE 2",
-                                    subUnitId = "2"
-                                )
-                            )
-                            listOfSubUnitList.add(
-                                SubUnitTableModel(
-                                    subUnitName = "$NO_DATA_AVAILABLE 3",
-                                    subUnitId = "3"
+                                    subUnitName = NO_DATA_AVAILABLE,
+                                    subUnitId = NO_DATA_AVAILABLE_VAL
                                 )
                             )
                             _lvSubUnitData.postValue(1)
@@ -585,7 +575,7 @@ class AllocateTaskViewModel : ViewModel() {
                     model.message =
                         "Something is wrong while fetching Sub Unit Data, Please try again!"
                     model.spinnerType = SpinnerType.SUB_UNIT_LIST
-                    listOfStage = arrayListOf()
+                    listOfSubUnitList = arrayListOf()
                     _lvErrorData.postValue(model)
                     Log.e(TAG, "getSubUnitApi: Error model : $model")
                 //}
@@ -659,7 +649,7 @@ class AllocateTaskViewModel : ViewModel() {
                 if (listOfGroupList.size != 0) {
                     listOfGroupList.add(
                         0,
-                        GroupListTableModel(Grp_Name = "Select Group", Grp_ID = "")
+                        GroupListTableModel(Grp_Name = "Select Group", Grp_ID = NO_DATA_AVAILABLE_VAL)
                     )
                 }
                 val count = listOfGroupList.size
@@ -685,7 +675,7 @@ class AllocateTaskViewModel : ViewModel() {
                     CustomTitle.rfiDB.unitDao()
                         .getAllUnitList(RfiDatabase.selectedFloorId) as ArrayList<UnitTableModel>
                 if (listOfUnitList.size != 0) {
-                    listOfUnitList.add(0, UnitTableModel(Unit_Name = "Select Unit", Unit_ID = ""))
+                    listOfUnitList.add(0, UnitTableModel(Unit_Name = "Select Unit", Unit_ID = NO_DATA_AVAILABLE_VAL))
                 }
                 val count = listOfUnitList.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getUnitListDataFromDB: count: $count ")
@@ -711,12 +701,12 @@ class AllocateTaskViewModel : ViewModel() {
                         RfiDatabase.selectedSchemeId,
                         RfiDatabase.selectedWorkTypeId
                     ) as ArrayList<SubUnitTableModel>
-                if (listOfSubUnitList.size != 0) {
+               /* if (listOfSubUnitList.size != 0) {
                     listOfSubUnitList.add(
                         0,
-                        SubUnitTableModel(subUnitName = "Select Sub Unit", subUnitId = "")
+                        SubUnitTableModel(subUnitName = "Select Sub Unit", subUnitId = NO_DATA_AVAILABLE_VAL)
                     )
-                }
+                }*/
                 val count = listOfSubUnitList.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getSubUnitListDataFromDB: count: $count ")
                 _lvSubUnitData.postValue(count)
@@ -744,7 +734,7 @@ class AllocateTaskViewModel : ViewModel() {
                 if (listOfQuestions.size != 0) {
                     listOfQuestions.add(
                         0,
-                        QuestionsTableModel(question = "Select Question", questionId = 0)
+                        QuestionsTableModel(question = "Select Question", questionId = NO_DATA_AVAILABLE_VAL.toInt())
                     )
                 }
                 val count = listOfQuestions.size
@@ -774,7 +764,7 @@ class AllocateTaskViewModel : ViewModel() {
                 if (listOfStage.size != 0) {
                     listOfStage.add(
                         0,
-                        StageTableModel(floor_Id = "", floor_Name = "Select Floor")
+                        StageTableModel(floor_Id = NO_DATA_AVAILABLE_VAL, floor_Name = "Select Floor")
                     )
                 }
                 val count = listOfStage.size
@@ -801,7 +791,7 @@ class AllocateTaskViewModel : ViewModel() {
                 if (listOfWorkType.size != 0) {
                     listOfWorkType.add(
                         0,
-                        WorkTypeTableModel(activitySequenceGroupId = 0, activitySequenceName = "Select Work")
+                        WorkTypeTableModel(activitySequenceGroupId = NO_DATA_AVAILABLE_VAL.toInt(), activitySequenceName = "Select Work")
                     )
                 }
                 val count = listOfWorkType.size
@@ -830,7 +820,7 @@ class AllocateTaskViewModel : ViewModel() {
                 if (listOfCheckList.size != 0) {
                     listOfCheckList.add(
                         0,
-                        ChecklistTableModel(Checklist_Name = "Select Check", Checklist_ID = "")
+                        ChecklistTableModel(Checklist_Name = "Select Check", Checklist_ID = NO_DATA_AVAILABLE_VAL)
                     )
                 }
                 val count = listOfCheckList.size
@@ -853,7 +843,7 @@ class AllocateTaskViewModel : ViewModel() {
             try {
                 list = CustomTitle.rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
                 if (list.size != 0) {
-                    list.add(0, ClientTableModel(clientId = 0, clientName = "Select Client"))
+                    list.add(0, ClientTableModel(clientId = NO_DATA_AVAILABLE_VAL.toInt(), clientName = "Select Client"))
                 }
                 val count = list.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getClientData: count: $count ")
@@ -872,7 +862,7 @@ class AllocateTaskViewModel : ViewModel() {
                     CustomTitle.rfiDB.projectDao()
                         .getAllProjects(clientId.toString()) as ArrayList<ProjectTableModel>
                 if (listOfProject.size != 0) {
-                    listOfProject.add(0, ProjectTableModel(PK_Scheme_ID = "", Scheme_Name = "Select Project"))
+                    listOfProject.add(0, ProjectTableModel(PK_Scheme_ID = NO_DATA_AVAILABLE_VAL, Scheme_Name = "Select Project"))
                 }
                 val count = listOfProject.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getProjectDataFromDB: count: $count ")
@@ -893,7 +883,7 @@ class AllocateTaskViewModel : ViewModel() {
                         RfiDatabase.selectedWorkTypeId
                     ) as ArrayList<StructureTableModel>
                 if (listOfStructure.size != 0) {
-                    listOfStructure.add(0, StructureTableModel(Bldg_ID = "", Bldg_Name = "Select Structure"))
+                    listOfStructure.add(0, StructureTableModel(Bldg_ID = NO_DATA_AVAILABLE_VAL, Bldg_Name = "Select Structure"))
                 }
                 val count = listOfStructure.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getStructureDataFromDB: count: $count ")

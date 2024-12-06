@@ -183,6 +183,7 @@ public class AllocateTask extends CustomTitle {
             public void onClick(View arg0) {
 
                 try {
+                    validateMandatory();
                     AllocateTaskTableModel model = new AllocateTaskTableModel();
                     model.setCheckListId(viewModel.getClientId());
                     model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
@@ -194,9 +195,13 @@ public class AllocateTask extends CustomTitle {
                     model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
                     model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
                     model.setUserId(Integer.parseInt(db.userId));
-                    viewModel.insertAllocateTask(model);
+
+                    //viewModel.insertAllocateTask(model);
+
                 } catch (NumberFormatException e) {
                     Log.d(TAG, "onClick: NumberFormatException: ",e);
+                    errorMessage = "Please select all mandatory fields";
+                    viewModel.isError = true;
                     //throw new RuntimeException(e);
                 }
                 /*String table_fields = "Client, Project, WorkType, Structure, Stage, Unit, SubUnit, Element, SubElement, CheckList, GroupColumn, UserID,NodeID";
@@ -233,9 +238,9 @@ public class AllocateTask extends CustomTitle {
                 db.insert("Rfi_New_Create", "FK_rfi_Id,user_id", "'" + value + "','" + db.userId + "'");
 
 */
-                if (validateScreen()) {
+                if (viewModel.isError) {
                     displayErrorDialog("Error", errorMessage);
-
+                    viewModel.isError = false;
                 } else if (viewModel.getListOfQuestions().size() != 1/*isQuestionAvailable()*/) {
                     if (db.selectedScrollStatus.equalsIgnoreCase("true")) {
                         Intent int1 = new Intent(AllocateTask.this,
@@ -255,6 +260,45 @@ public class AllocateTask extends CustomTitle {
         });
 
         backBtn.setOnClickListener(v -> onBackPressed());
+    }
+
+    private void validateMandatory() {
+        if (viewModel.getClientId() == 0) {
+            displayErrorDialog("Error", "Please select Client");
+            return;
+        }
+        if (db.selectedBuildingId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Project");
+            return;
+        }
+        if (db.selectedWorkTypeId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Work Type");
+            return;
+        }
+        if (db.selectedChecklistId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Checklist");
+            return;
+        }
+        if (db.selectedFloorId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Structure");
+            return;
+        }
+        if (db.selectedGroupId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Group");
+            return;
+        }
+        if (db.selectedUnitId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Unit");
+            return;
+        }
+        if (db.selectedSubUnitId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Sub Unit");
+            return;
+        }
+        if (db.selectedNodeId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Node");
+            return;
+        }
     }
 
     private void observerData() {
@@ -524,10 +568,6 @@ public class AllocateTask extends CustomTitle {
         viewModel.setClientId(0);
         db.selectedScrollStatus = "";
 
-    }
-
-    protected boolean validateScreen() {
-        return false;
     }
 
     @SuppressWarnings("deprecation")
@@ -890,7 +930,7 @@ public class AllocateTask extends CustomTitle {
     }
 
     private void setSubUnitSpinnerData() {
-
+        subunitspin.setText("Select Sub Unit");
         ArrayList<SubUnitTableModel> list = viewModel.getListOfSubUnitList();
         int size = list.size();
         String[] items = new String[size];
@@ -905,7 +945,7 @@ public class AllocateTask extends CustomTitle {
         subunitspin.setOnClickListener(view -> {
 
             // initialise the alert dialog builder
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.AlertDialogCustom);
 
             // set the title for the alert dialog
             builder.setTitle("Select Sub Unit");
@@ -913,7 +953,7 @@ public class AllocateTask extends CustomTitle {
             // now this is the function which sets the alert dialog for multiple item selection ready
             builder.setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> {
                 checkedItems[which] = isChecked;
-                String currentItem = selectedItems.get(which);
+                //String currentItem = selectedItems.get(which);
             });
 
             // alert dialog shouldn't be cancellable
@@ -921,11 +961,26 @@ public class AllocateTask extends CustomTitle {
 
             // handle the positive button of the dialog
             builder.setPositiveButton("Done", (dialog, which) -> {
+                StringBuilder stringBuilder = new StringBuilder();
                 for (int i = 0; i < checkedItems.length; i++) {
                     if (checkedItems[i]) {
                         Log.d(TAG, "setSubUnitSpinnerData: "+(selectedItems.get(i)));
-                       // tvSelectedItemsPreview.setText(String.format("%s%s, ", tvSelectedItemsPreview.getText(), selectedItems.get(i)));
+                        stringBuilder.append(selectedItems.get(i));
+                        stringBuilder.append(", ");
                     }
+                }
+                if (checkedItems.length > 0){
+                    Log.d(TAG, "b4 setSubUnitSpinnerData: stringBuilder: "+ stringBuilder);
+                    if (!stringBuilder.toString().isEmpty()){
+                        stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+                        Log.d(TAG, "after setSubUnitSpinnerData: stringBuilder: "+ stringBuilder);
+                        subunitspin.setText(stringBuilder.toString());
+                    }else {
+                        subunitspin.setText("Select Sub Unit");
+                    }
+
+                }else {
+                    subunitspin.setText("Select Sub Unit");
                 }
             });
 
@@ -935,6 +990,7 @@ public class AllocateTask extends CustomTitle {
             // handle the neutral button of the dialog to clear the selected items boolean checkedItem
             builder.setNeutralButton("CLEAR ALL", (dialog, which) -> {
                 Arrays.fill(checkedItems, false);
+                subunitspin.setText("Select Sub Unit");
             });
 
             // create the builder
