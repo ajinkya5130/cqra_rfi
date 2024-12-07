@@ -29,8 +29,11 @@ import android.widget.Toast;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.multispinner.MultiSelectSpinner;
+import com.ob.database.db_tables.BuildingAllocateTaskModel;
 import com.ob.database.db_tables.ClientAllocateTaskModel;
+import com.ob.database.db_tables.FloorAllocateTaskModel;
 import com.ob.database.db_tables.ProjectAllocateTaskModel;
+import com.ob.database.db_tables.WorkTypeAllocateTaskModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
@@ -418,6 +421,39 @@ public class SelectQuestion extends CustomTitle {
 
                     if (value!=0){
                         setSchemeSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvWorkTypeAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
+
+                    if (value!=0){
+                        setWorkTypeSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvBuildingAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
+
+                    if (value!=0){
+                        setBuildingSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvFloorAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
+
+                    if (value!=0){
+                        setFloorSpinnerData();
                     }else {
                         displayErrorDialog("Error","No Data");
                     }
@@ -811,7 +847,7 @@ public class SelectQuestion extends CustomTitle {
                 if (position > 0) {
                     db.selectedSchemeId = schemId[position].toString();
                     db.selectedScrollStatus = scrolling_status[position];
-                    //setWorkTypeSpinnerData(schemId[position]);
+                    viewModel.getWorkTypeAllocatedData();
                     worktypeSpin.setClickable(true);
 
                     db.selectedSchemeName = projSpin.getSelectedItem()
@@ -839,53 +875,15 @@ public class SelectQuestion extends CustomTitle {
         });
     }
 
-    private void setWorkTypeSpinnerData(final String schemId2) {
-        /* FK_PRJ_Id */
-
-	/*	String where = "user_id='" + db.userId + "' AND FK_PRJ_Id='"
-				+ db.selectedSchemeId + "'";
-
-		Cursor cursor = db.select("WorkType",
-				"distinct(WorkTyp_ID),WorkTyp_Name,WorkTyp_level", where, null,
-				null, null, null);
-
-		System.out.println("in workype...............");
-		wTypeId = new String[cursor.getCount()];
-		wTypeLevelId = new String[cursor.getCount()];
-		String[] items = new String[cursor.getCount() + 1];
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-
-			do {
-				wTypeId[cursor.getPosition()] = cursor.getString(0);
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-				wTypeLevelId[cursor.getPosition()] = cursor.getString(2);
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "WorkType(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}   */
-        Cursor cursor = db.select("WorkType w, AllocateTask a", "distinct(w.WorkTyp_Name),w.WorkTyp_ID", "w.WorkTyp_ID = a.WorkType AND w.FK_PRJ_Id = '" + schemId2 + "'", null, null, null, null);
-        final String[] worktypeID = new String[cursor.getCount()];
-        String[] workTypeName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                workTypeName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    workTypeName[i] = cursor.getString(0);
-                    worktypeID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            displayDialog("Sorry!", "No Data in WorkType");
+    private void setWorkTypeSpinnerData() {
+        ArrayList<WorkTypeAllocateTaskModel> list = viewModel.getListOfWorkTypeAllocateTaskModel();
+        int size = list.size();
+        final Integer[] workTypeID = new Integer[size];
+        String[] workTypeName = new String[size];
+        for(int i =0; i<size; i++){
+            WorkTypeAllocateTaskModel model = list.get(i);
+            workTypeName[i] = model.getWorkTypeName();
+            workTypeID[i] = model.getWorkTypeId();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -898,48 +896,14 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedWorkTypeId = worktypeID[position - 1];
+                    db.selectedWorkTypeId = workTypeID[position].toString();
                     System.out
                             .println("***** Inside workTypeSpin.onItemSelectedListener *****");
                     // db.selectedSchemeName=projSpin.getSelectedItem().toString();
                     System.out.println("db.selectedWorkTypeId : "
                             + db.selectedWorkTypeId);
-                    // System.out.println("heloooooooo  worktype level id===="+wTypeLevelId[position
-                    // - 1]);
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 24-APRIL-2015
-                    // setCheckListSpinnerData();
-			/*		db.selectedlevelId = wTypeLevelId[position - 1];
-					System.out.println("db.selectedlevelId : "
-							+ db.selectedlevelId); */
-	/*				if (isDataAvialableForID("Building", "FK_WorkTyp_ID",
-							db.selectedWorkTypeId)) {
-						System.out
-								.println("Data already present in Building Table");
-						if (Integer.parseInt(db.selectedlevelId) >= 1) {
-							System.out
-									.println("Setting Building Spinner Data.....SchemeID2 : "
-											+ schemId2);
-							System.out
-									.println("Calling setBuildingSpinnerData by passing schemeid as : "
-											+ schemId2);
-							setBulidngSpinnerData(schemId2);
-							structureSpin.setClickable(true);
-							structureSpin.setSelection(0);
-						}
-
-					} else {
-						System.out
-								.println("Data not present in Building Table");
-						method = "getStructure";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId, "0" };
-						callStructureService();
-					} */
-                    setBulidngSpinnerData(schemId2);
+                    viewModel.getBuildingDataFromDB();
+                    //setBulidngSpinnerData();
                     structureSpin.setClickable(true);
                     structureSpin.setSelection(0);
                     System.out.println("SelectedLevelID : "
@@ -948,28 +912,6 @@ public class SelectQuestion extends CustomTitle {
                             + db.selectedWorkTypeId);
                     System.out.println("SelectedSchemeID : "
                             + db.selectedSchemeId);
-                    /***** AKSHAY *****/
-                    /*
-                     * if(Integer.parseInt(db.selectedlevelId)>=1) {
-                     * System.out.println
-                     * ("Setting Building Spinner Data.....SchemeID2 : " +
-                     * schemId2); System.out.println(
-                     * "Calling setBuildingSpinnerData by passing schemeid as : "
-                     * + schemId2); setBulidngSpinnerData(schemId2); }
-                     *
-                     *
-                     *
-                     *
-                     * structureSpin.setClickable(true);
-                     * structureSpin.setSelection(0);
-                     */
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 24-APRIL-2015
-                    /*
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     */
-                    /***** AKSHAY *****/
 
                 }
                 else {
@@ -991,67 +933,18 @@ public class SelectQuestion extends CustomTitle {
         });
     }
 
-    private void setBulidngSpinnerData(final String schemeid) {
+    private void setBuildingSpinnerData() {
 
-        // Building(Bldg_ID TEXT,Bldg_Name TEXT,Build_scheme_id TEXT, user_id
-        // TEXT)");
-
-	/*	String where = "b.Build_scheme_id = s.PK_Scheme_ID AND b.Build_scheme_id='"
-				+ schemeid
-				+ "'"
-				+ "AND b.FK_WorkTyp_ID='"
-				+ db.selectedWorkTypeId
-				+ "' AND s.user_id='"
-				+ db.userId
-				+ "' AND b.user_id='" + db.userId + "'";
-
-		Cursor cursor = db.select("Building as b, Scheme as s",
-				" distinct(b.Bldg_ID), b.Bldg_Name", where, null, null, null,
-				null);
-		System.out.println("Count of Cursor in Building Table is : "
-				+ cursor.getCount());
-		bldgId = new String[cursor.getCount()];
-		String[] items = new String[cursor.getCount() + 1];
-
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-			do {
-				bldgId[cursor.getPosition()] = cursor.getString(0);
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "Building(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}
-
-		// ----------checking worktype id--------------
-
-		final String where1 = "FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-				+ "' AND user_id='" + db.userId + "'";
-		final String table = "floor";   */
-        Cursor cursor = db.select("Building b, AllocateTask a", "distinct(b.Bldg_Name),b.Bldg_ID", "b.Bldg_ID = a.Structure AND b.FK_WorkTyp_ID = '" + db.selectedWorkTypeId + "'", null, null, null, null);
-        final String[] buildingID = new String[cursor.getCount()];
-        String[] buildingName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                buildingName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    buildingName[i] = cursor.getString(0);
-                    buildingID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            displayDialog("Sorry!", "No Data in Building");
+        ArrayList<BuildingAllocateTaskModel> list = viewModel.getListOfBuildingAllocateTaskModel();
+        int size = list.size();
+        final Integer[] buildingID = new Integer[size];
+        String[] buildingName = new String[size];
+        for(int i =0; i<size; i++){
+            BuildingAllocateTaskModel model = list.get(i);
+            buildingName[i] =model.getBuildingName();
+            buildingID[i] = model.getBuildingId();
         }
+
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, buildingName);
@@ -1062,50 +955,13 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> arg0, View arg1,
                                        int position, long arg3) {
                 if (position > 0) {
-                    db.selectedBuildingId = buildingID[position - 1];
-                    db.selectedNodeId = buildingID[position - 1];
-                    // setFloorSpinnerData(bldgId[position - 1],schemeid);
-		/*			if (isDataAvialableForID("floor", "FK_Bldg_ID",
-							db.selectedBuildingId)) {
-						setFloorSpinnerData(bldgId[position - 1], schemeid);
-						stageSpin.setClickable(true);
-						stageSpin.setSelection(0);
-					} else {
-						method = "getStage";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId,
-								db.selectedBuildingId };
-						callStageService();
-					}      */
+                    db.selectedBuildingId = buildingID[position].toString();
+                    db.selectedNodeId = buildingID[position].toString();
+                    viewModel.getFloorDataFromDB();
 
-                    setFloorSpinnerData(buildingID[position - 1], schemeid);
+//                    setFloorSpinnerData(buildingID[position - 1], schemeid);
                     stageSpin.setClickable(true);
                     stageSpin.setSelection(0);
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 29 APRIL 2015
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     *
-                     * System.out.println("selecteed bdg id" +
-                     * db.selectedBuildingId);
-                     *
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=2) {
-                     * setFloorSpinnerData(bldgId[position - 1],schemeid);
-                     * stageSpin.setClickable(true); stageSpin.setSelection(0);
-                     *
-                     *
-                     * }
-                     */
 
                 } else {
                     stageSpin.setClickable(false);
@@ -1120,13 +976,6 @@ public class SelectQuestion extends CustomTitle {
                     subelementspin.setSelection(0);
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
-
-                    /*
-                     * // checklistspin.setClickable(false); //
-                     * checklistspin.setSelection(0);
-                     * grouptspin.setClickable(false);
-                     * grouptspin.setSelection(0);
-                     */
 
                     db.selectedBuildingId = "";
                     db.selectedChecklistId = "";
@@ -1145,57 +994,16 @@ public class SelectQuestion extends CustomTitle {
         });
     }
 
-    private void setFloorSpinnerData(String buld_id, final String schemeid) {
+    private void setFloorSpinnerData() {
 
-        // floor (floor_Id TEXT,floor_Name TEXT,Floor_Scheme_ID TEXT,FK_Bldg_ID
-        // TEXT, user_id TEXT)");
-
-	/*	String where = "f.Floor_Scheme_ID='" + schemeid
-				+ "' AND f.FK_Bldg_ID='" + buld_id + "' AND f.FK_WorkTyp_ID='"
-				+ db.selectedWorkTypeId + "' AND f.user_id='" + db.userId
-				+ "' AND s.PK_Scheme_ID=f.Floor_Scheme_ID";
-		Cursor cursor = db.select("floor as f, Scheme as s",
-				"distinct(f.floor_Id),f.floor_Name", where, null, null, null,
-				null);
-
-		floorid = new String[cursor.getCount()];
-		final String[] items = new String[cursor.getCount() + 1];
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-
-			do {
-				floorid[cursor.getPosition()] = cursor.getString(0);
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "Floor(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}
-
-		final String where1 = "FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-				+ "' AND user_id='" + db.userId + "'";
-		final String table = "Unit";   */
-        Cursor cursor = db.select("floor f, AllocateTask a", "distinct(f.floor_Name),f.floor_Id", "f.floor_Id = a.Stage AND f.FK_Bldg_ID = '" + db.selectedBuildingId + "' AND f.Floor_Scheme_ID = '" + db.selectedSchemeId + "'", null, null, null, null);
-        final String[] floorID = new String[cursor.getCount()];
-        String[] floorName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                floorName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    floorName[i] = cursor.getString(0);
-                    floorID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            displayDialog("Sorry!", "No Data in Building");
+        ArrayList<FloorAllocateTaskModel> list = viewModel.getListOfFloorAllocateTaskModel();
+        int size = list.size();
+        final Integer[] floorID = new Integer[size];
+        String[] floorName = new String[size];
+        for(int i =0; i<size; i++){
+            FloorAllocateTaskModel model = list.get(i);
+            floorName[i] = model.getFloorName();
+            floorID[i] = model.getFloorId();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -1208,38 +1016,9 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> arg0, View arg1,
                                        int position, long arg3) {
                 if (position > 0) {
-                    db.selectedFloorId = floorID[position - 1];
-                    db.selectedNodeId = floorID[position - 1];
-                    // setUnitSpinnerData(floorid[position - 1],schemeid);
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON 30-APRIL-2015
+                    db.selectedFloorId = floorID[position].toString();
+                    db.selectedNodeId = floorID[position].toString();
                     /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=3) {
-                     * setUnitSpinnerData(floorid[position - 1],schemeid);
-                     * unitSpin.setClickable(true); unitSpin.setSelection(0); }
-                     *//***** AKSHAY *****/
-		/*			if (isDataAvialableForID("Unit", "Fk_Floor_ID",
-							db.selectedFloorId)) {
-						setUnitSpinnerData(db.selectedFloorId,
-								db.selectedSchemeId);
-						unitSpin.setClickable(true);
-						unitSpin.setSelection(0);
-					} else {
-						method = "getUnit";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId,
-								db.selectedFloorId };
-						callUnitService();
-
-					} */
                     Cursor cursor = db.select("Unit u, AllocateTask a", "distinct(u.Unit_Des),u.Unit_ID", "u.Unit_ID = a.Unit AND u.Fk_Floor_ID = '" + db.selectedFloorId + "' AND u.Unit_Scheme_ID = '" + db.selectedSchemeId + "'", null, null, null, null);
                     String[] unitName = new String[cursor.getCount() + 1];
                     if (cursor.getCount() > 0) {
@@ -1250,7 +1029,7 @@ public class SelectQuestion extends CustomTitle {
                         setCheckListSpinnerData();
                         checklistspin.setClickable(true);
                         checklistspin.setSelection(0);
-                    }
+                    }*/
 
 
                 } else {
@@ -2493,7 +2272,7 @@ public class SelectQuestion extends CustomTitle {
                             + fk_worktype_id + "','" + db.userId + "'";
                     db.insert("Building", column, values);
                 }
-                setBulidngSpinnerData(db.selectedSchemeId);
+                //setBulidngSpinnerData(db.selectedSchemeId);
                 structureSpin.setClickable(true);
                 structureSpin.setSelection(0);
 
@@ -2560,7 +2339,7 @@ public class SelectQuestion extends CustomTitle {
                             + fk_worktype_id + "','" + db.userId + "'";
                     db.insert("floor", column, values);
                 }
-                setFloorSpinnerData(db.selectedBuildingId, db.selectedSchemeId);
+                //setFloorSpinnerData(db.selectedBuildingId, db.selectedSchemeId);
                 stageSpin.setClickable(true);
                 stageSpin.setSelection(0);
             } catch (Exception e) {
