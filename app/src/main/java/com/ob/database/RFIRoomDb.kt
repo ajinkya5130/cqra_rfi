@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ob.database.RFIRoomDb.Companion.TAG
 import com.ob.database.dao.AllocateTaskDao
 import com.ob.database.dao.CheckListDao
+import com.ob.database.dao.ClientAllocateTaskDao
 import com.ob.database.dao.ClientDao
 import com.ob.database.dao.GroupListDao
 import com.ob.database.dao.ProjectDao
@@ -63,6 +64,7 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun subUnitDao(): SubUnitDao
     abstract fun questionsDao(): QuestionsDao
     abstract fun allocateTaskDao(): AllocateTaskDao
+    abstract fun clientAllocateTaskDao(): ClientAllocateTaskDao
 
     companion object {
         const val TAG = "RFIRoomDb"

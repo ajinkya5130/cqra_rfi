@@ -26,10 +26,15 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.lifecycle.ViewModelProvider;
+
 import com.multispinner.MultiSelectSpinner;
+import com.ob.database.db_tables.ClientAllocateTaskModel;
+import com.ob.database.db_tables.ProjectAllocateTaskModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
+import com.ob.select_questions.viewmodels.SelectQuestionViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,6 +42,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("static-access")
 public class SelectQuestion extends CustomTitle {
@@ -51,7 +57,7 @@ public class SelectQuestion extends CustomTitle {
     private Spinner foremanspin;
     private Spinner contractorspin;
     public static CustomTitle slectionclass;
-    private String[] schemId;
+    private Integer[] schemId;
     private String[] tradeId;
     private String[] chklstId;
     private String[] bldgId;
@@ -72,8 +78,8 @@ public class SelectQuestion extends CustomTitle {
     private RfiDatabase db;
     private String selected = "";
     private Spinner clientspin;
-    private String[] client;
-    private String[] clientId;
+    private String[] clientName;
+    private Integer[] clientId;
     private Spinner rfiSpin;
     private Spinner projSpin;
     private Spinner clintSpin;
@@ -130,6 +136,7 @@ public class SelectQuestion extends CustomTitle {
     boolean isSubElement = false;
     boolean isGroup = false;
     private boolean isGroupDataAvailable = false;
+    private SelectQuestionViewModel viewModel;
 
     String bit = "";
     private ImageView viewCoverageImageView;
@@ -137,6 +144,7 @@ public class SelectQuestion extends CustomTitle {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(SelectQuestionViewModel.class);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.select_question);
@@ -197,16 +205,12 @@ public class SelectQuestion extends CustomTitle {
 
 
         ResetId();
+        setupLiveData();
 
         okBtn = (Button) findViewById(R.id.question_select_submit);
         backBtn = (Button) findViewById(R.id.question_select_Back);
 
         db = new RfiDatabase(getApplicationContext());
-        if (db.userId.equalsIgnoreCase("")) {
-//            logout();
-        } else {
-            // setSchemeSpinnerData();
-        }
 
         okBtn.setOnClickListener(new OnClickListener() {
             private SharedPreferences checkPreferences;
@@ -385,61 +389,41 @@ public class SelectQuestion extends CustomTitle {
 
         if (!db.userId.equalsIgnoreCase("")) {
 
-            if (isDataAvialable("Client") && isDataAvialableAllocateTask("AllocateTask")) {
+            //if (isDataAvialable("Client") && isDataAvialableAllocateTask("AllocateTask")) {
 
-                setClientData();
+            viewModel.getClientAllocateDataFromDB();
+                //setClientData();
                 clintSpin.setClickable(true);
                 clintSpin.setSelection(1);// changed pramod
-            }
+            //}
         }
 
     }
 
-    private void setRFISpinnerData() {
-        // TODO Auto-generated method stub
-        String columns = "FK_rfi_Id,user_id";
-        String where = "user_id = '" + db.userId + "'";
-        Cursor cursor = db.select("Rfi_New_Create", columns, where, null, null, null, null);
-        final String[] selectRFIDropDown = new String[cursor.getCount() + 1];
-        final String[] selectRFID = new String[cursor.getCount() + 1];
-        int i = 0;
-        selectRFIDropDown[i] = "-----SELECT-----";
-        selectRFID[i] = "0";
-        if (cursor.moveToFirst()) {
-            do {
-                i = i + 1;
-                selectRFIDropDown[i] = "RFI " + cursor.getString(cursor.getColumnIndex("FK_rfi_Id"));
-                selectRFID[i] = "" + i;
-            } while (cursor.moveToNext());
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_spinner_item, selectRFIDropDown);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            rfiSpin.setAdapter(adapter);
-            adapter.notifyDataSetChanged();
-            rfiSpin.setSelection(0);
-            rfiSpin.setClickable(true);
-            rfiSpin.setOnItemSelectedListener(new OnItemSelectedListener() {
+    private void setupLiveData() {
+        Objects.requireNonNull(viewModel.getLvClientAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
 
-                @Override
-                public void onItemSelected(AdapterView<?> arg0, View arg1,
-                                           int arg2, long arg3) {
-                    // TODO Auto-generated method stub
-                    if (arg2 >= 1) {
-                        db.selectedrfiId = selectRFID[arg2];
-                        System.out.println("Selected RFI ID = " + db.selectedrfiId);
+                    if (value!=0){
                         setClientData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
                     }
                 }
+        );
+        Objects.requireNonNull(viewModel.getLvSchemaAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "onCreate: value: "+value);
 
-                @Override
-                public void onNothingSelected(AdapterView<?> arg0) {
-                    // TODO Auto-generated method stub
-
+                    if (value!=0){
+                        setSchemeSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
                 }
-            });
-        } else {
-            System.out.println("-----No Data in Cursor-----");
-        }
+        );
+
     }
 
     //changed by sayali
@@ -734,26 +718,15 @@ public class SelectQuestion extends CustomTitle {
 			cursor.close();
 		}		*/
 
-
-        Cursor cursor = db.select("Client c, AllocateTask a", "distinct(c.Clnt_Name), c.Client_ID", "c.Client_ID = a.Client", null, null, null, null);
-        final String[] clientID = new String[cursor.getCount()];
-        String[] clientName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                clientName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    clientName[i] = cursor.getString(0);
-                    clientID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            displayDialog("Sorry!", "No Data in Client");
+        ArrayList<ClientAllocateTaskModel> list = viewModel.getListOfClientAllocateTaskModel();
+        int size = list.size();
+        clientId = new Integer[size];
+        clientName = new String[size];
+        for(int i =0; i<size; i++){
+            clientName[i] = list.get(i).getClientName();
+            clientId[i] = list.get(i).getClientId();
         }
+
         try {
 
 
@@ -774,9 +747,10 @@ public class SelectQuestion extends CustomTitle {
                         db.selectedclientname = clintSpin.getSelectedItem()
                                 .toString();
                         System.out.println("client selected not present");
-                        db.selectedClientId = clientID[position - 1];
+                        db.selectedClientId = clientId[position].toString();
+                        viewModel.getSchemaOrProjectData();
 
-                        setSchemeSpinnerData(clientID[position - 1]);
+                        //setSchemeSpinnerData();
                         worktypeSpin.setSelection(0);
                         worktypeSpin.setClickable(false);
                         projSpin.setSelection(1);
@@ -810,55 +784,18 @@ public class SelectQuestion extends CustomTitle {
         }
     }
 
-    private void setSchemeSpinnerData(String Cl_ID) {
+    private void setSchemeSpinnerData() {
 
-	/*	String where = "s.Scheme_Cl_Id = c.Client_ID AND s.Scheme_Cl_Id='"
-				+ db.selectedClientId + "' AND s.user_id='" + db.userId + "'";
-		Cursor cursor = db.select("Scheme as s, Client as c",
-				"distinct(s.PK_Scheme_ID), s.Scheme_Name,s.scrolling_status",
-				where, null, null, null, null);
-
-		schemId = new String[cursor.getCount()];
-		scroll_status = new String[cursor.getCount()];
-		String[] items = new String[cursor.getCount() + 1];
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-
-			do {
-				schemId[cursor.getPosition()] = cursor.getString(0);
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-				scroll_status[cursor.getPosition()] = cursor.getString(2);
-
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "Scheme(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}
-		final String where1 = "FK_WorkTyp_ID ='" + "1" + "' AND user_id='"
-				+ db.userId + "'"; */
-        Cursor cursor = db.select("Scheme s, AllocateTask a", "distinct(s.Scheme_Name), s.PK_Scheme_ID, s.scrolling_status", "s.PK_Scheme_ID = a.Project AND s.Scheme_Cl_Id = '" + Cl_ID + "'", null, null, null, null);
-        final String[] schemeID = new String[cursor.getCount()];
-        final String[] scrolling_status = new String[cursor.getCount()];
-        String[] schemeName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                schemeName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    schemeName[i] = cursor.getString(0);
-                    schemeID[i - 1] = cursor.getString(1);
-                    scrolling_status[i - 1] = cursor.getString(2);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            displayDialog("Sorry!", "No Data in Scheme");
+        ArrayList<ProjectAllocateTaskModel> list = viewModel.getListOfSchemaAllocateTaskModel();
+        int size = list.size();
+        schemId = new Integer[size];
+        final String[] scrolling_status = new String[size];
+        String[] schemeName = new String[size];
+        for(int i =0; i<size; i++){
+            ProjectAllocateTaskModel model = list.get(i);
+            schemeName[i] = model.getSchemaOrProjectName();
+            schemId[i] = model.getSchemaOrProjectId();
+            scrolling_status[i] = model.getScrollingStatus();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -872,27 +809,15 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedSchemeId = schemeID[position - 1];
-                    db.selectedScrollStatus = scrolling_status[position - 1];
-                    // setBulidngSpinnerData(schemId[position - 1]);
-                    setWorkTypeSpinnerData(schemeID[position - 1]);
+                    db.selectedSchemeId = schemId[position].toString();
+                    db.selectedScrollStatus = scrolling_status[position];
+                    //setWorkTypeSpinnerData(schemId[position]);
                     worktypeSpin.setClickable(true);
 
                     db.selectedSchemeName = projSpin.getSelectedItem()
                             .toString();
                     System.out.println("heloooooooo===="
                             + db.selectedSchemeName);
-                    /***** AKSHAY *****/
-                    /*
-                     * setCheckListSpinnerData();
-                     * structureSpin.setClickable(true);
-                     * structureSpin.setSelection(0);
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     * worktypeSpin.setSelection(0);
-                     * worktypeSpin.setClickable(true);
-                     *//***** AKSHAY *****/
-
                 } else {
                     db.selectedSchemeId = "";
                     db.selectedScrollStatus = "";
