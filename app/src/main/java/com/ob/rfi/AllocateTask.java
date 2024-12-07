@@ -183,20 +183,21 @@ public class AllocateTask extends CustomTitle {
             public void onClick(View arg0) {
 
                 try {
-                    validateMandatory();
-                    AllocateTaskTableModel model = new AllocateTaskTableModel();
-                    model.setCheckListId(viewModel.getClientId());
-                    model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
-                    model.setCheckListId(Integer.parseInt(db.selectedChecklistId));
-                    model.setProjectId(Integer.parseInt(db.selectedBuildingId));
-                    model.setStructureId(Integer.parseInt(db.selectedFloorId));
-                    model.setGroupId(Integer.parseInt(db.selectedGroupId));
-                    model.setUnitId(Integer.parseInt(db.selectedUnitId));
-                    model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
-                    model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
-                    model.setUserId(Integer.parseInt(db.userId));
-
-                    //viewModel.insertAllocateTask(model);
+                    viewModel.isError = validateMandatory();
+                    if (!viewModel.isError){
+                        AllocateTaskTableModel model = new AllocateTaskTableModel();
+                        model.setCheckListId(viewModel.getClientId());
+                        model.setWorkTypeId(Integer.parseInt(db.selectedWorkTypeId));
+                        model.setCheckListId(Integer.parseInt(db.selectedChecklistId));
+                        model.setProjectId(Integer.parseInt(db.selectedBuildingId));
+                        model.setStructureId(Integer.parseInt(db.selectedFloorId));
+                        model.setGroupId(Integer.parseInt(db.selectedGroupId));
+                        model.setUnitId(Integer.parseInt(db.selectedUnitId));
+                        model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
+                        model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
+                        model.setUserId(Integer.parseInt(db.userId));
+                        viewModel.insertAllocateTask(model);
+                    }
 
                 } catch (NumberFormatException e) {
                     Log.d(TAG, "onClick: NumberFormatException: ",e);
@@ -204,40 +205,7 @@ public class AllocateTask extends CustomTitle {
                     viewModel.isError = true;
                     //throw new RuntimeException(e);
                 }
-                /*String table_fields = "Client, Project, WorkType, Structure, Stage, Unit, SubUnit, Element, SubElement, CheckList, GroupColumn, UserID,NodeID";
-                String table_values = "'" + db.selectedClientId + "','"
-                        + db.selectedSchemeId + "','" + db.selectedWorkTypeId
-                        + "','" + db.selectedBuildingId + "','"
-                        + db.selectedFloorId + "','" + db.selectedUnitId
-                        + "','" + db.selectedSubUnitId + "','"
-                        + db.selectedElementId + "','"
-                        + db.selectedSubElementId + "','"
-                        + db.selectedChecklistId + "','" + db.selectedGroupId + "','" + db.userId + "','" + db.selectedNodeId + "'";
-                db.insert("AllocateTask", table_fields, table_values);
 
-                String where = "user_id='" + db.userId + "'";
-                Cursor cursor = db.select("Rfi_New_Create", "FK_rfi_Id", where, null,
-                        null, null, null);
-
-                String id = "";
-                if (cursor.moveToFirst()) {
-
-                    do {
-
-                        id = cursor.getString(0);
-                    } while (cursor.moveToNext());
-                } else {
-                    id = "0";
-                }
-
-                nval = Integer.parseInt(id);
-                nval = nval + 1;
-
-                String value = String.valueOf(nval);
-
-                db.insert("Rfi_New_Create", "FK_rfi_Id,user_id", "'" + value + "','" + db.userId + "'");
-
-*/
                 if (viewModel.isError) {
                     displayErrorDialog("Error", errorMessage);
                     viewModel.isError = false;
@@ -262,29 +230,43 @@ public class AllocateTask extends CustomTitle {
         backBtn.setOnClickListener(v -> onBackPressed());
     }
 
-    private void validateMandatory() {
+    private Boolean validateMandatory() {
         if (viewModel.getClientId() == 0) {
-            displayErrorDialog("Error", "Please select Client");
-            return;
+            errorMessage = "Please select Client";
+            //displayErrorDialog("Error", );
+            return true;
         }
         if (db.selectedBuildingId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Project");
-            return;
+            errorMessage = "Please select Project";
+            return true;
         }
         if (db.selectedWorkTypeId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Work Type");
-            return;
+            errorMessage = "Please select Work Type";
+            return true;
         }
         if (db.selectedChecklistId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Checklist");
-            return;
-        }
-        if (db.selectedFloorId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Structure");
-            return;
+            errorMessage = "Please select Checklist";
+            return true;
         }
         if (db.selectedGroupId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Group");
+            errorMessage = "Please select Group";
+            return true;
+        }
+        if (db.selectedNodeId.isEmpty()) {
+            errorMessage = "Please select Node";
+            return true;
+        }
+        if (db.selectedFloorId.isEmpty()) {
+            db.selectedFloorId = "0";
+        }
+        if (db.selectedUnitId.isEmpty()) {
+            db.selectedUnitId = "0";
+        }
+        if (db.selectedSubUnitId.isEmpty()) {
+            db.selectedSubUnitId = "0";
+        }/*
+        if (db.selectedFloorId.isEmpty()) {
+            displayErrorDialog("Error", "Please select Structure");
             return;
         }
         if (db.selectedUnitId.isEmpty()) {
@@ -294,11 +276,8 @@ public class AllocateTask extends CustomTitle {
         if (db.selectedSubUnitId.isEmpty()) {
             displayErrorDialog("Error", "Please select Sub Unit");
             return;
-        }
-        if (db.selectedNodeId.isEmpty()) {
-            displayErrorDialog("Error", "Please select Node");
-            return;
-        }
+        }*/
+        return false;
     }
 
     private void observerData() {
