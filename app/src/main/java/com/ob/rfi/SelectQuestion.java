@@ -11,10 +11,8 @@ import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -22,25 +20,24 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProvider;
 
 import com.multispinner.MultiSelectSpinner;
 import com.ob.database.db_tables.BuildingAllocateTaskModel;
+import com.ob.database.db_tables.CheckListAllocateTaskModel;
 import com.ob.database.db_tables.ClientAllocateTaskModel;
 import com.ob.database.db_tables.FloorAllocateTaskModel;
+import com.ob.database.db_tables.GroupListAllocateTaskModel;
 import com.ob.database.db_tables.ProjectAllocateTaskModel;
+import com.ob.database.db_tables.SubUnitAllocateTaskModel;
+import com.ob.database.db_tables.UnitAllocateTaskModel;
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
 import com.ob.select_questions.viewmodels.SelectQuestionViewModel;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,9 +138,6 @@ public class SelectQuestion extends CustomTitle {
     private boolean isGroupDataAvailable = false;
     private SelectQuestionViewModel viewModel;
 
-    String bit = "";
-    private ImageView viewCoverageImageView;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -181,8 +175,6 @@ public class SelectQuestion extends CustomTitle {
         elementSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_element_id_multi);
         subElementSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_sub_element_id_multi);
         groupSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_group_id_multi);
-
-        viewCoverageImageView = (ImageView) findViewById(R.id.viewCoverageImageview);
 
 
 
@@ -406,7 +398,7 @@ public class SelectQuestion extends CustomTitle {
     private void setupLiveData() {
         Objects.requireNonNull(viewModel.getLvClientAllocateData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
+                    Log.d(TAG, "getLvClientAllocateData: value: "+value);
 
                     if (value!=0){
                         setClientData();
@@ -417,7 +409,7 @@ public class SelectQuestion extends CustomTitle {
         );
         Objects.requireNonNull(viewModel.getLvSchemaAllocateData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
+                    Log.d(TAG, "getLvSchemaAllocateData: value: "+value);
 
                     if (value!=0){
                         setSchemeSpinnerData();
@@ -428,7 +420,7 @@ public class SelectQuestion extends CustomTitle {
         );
         Objects.requireNonNull(viewModel.getLvWorkTypeAllocateData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
+                    Log.d(TAG, "getLvWorkTypeAllocateData: value: "+value);
 
                     if (value!=0){
                         setWorkTypeSpinnerData();
@@ -439,7 +431,7 @@ public class SelectQuestion extends CustomTitle {
         );
         Objects.requireNonNull(viewModel.getLvBuildingAllocateData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
+                    Log.d(TAG, "getLvBuildingAllocateData: value: "+value);
 
                     if (value!=0){
                         setBuildingSpinnerData();
@@ -450,10 +442,55 @@ public class SelectQuestion extends CustomTitle {
         );
         Objects.requireNonNull(viewModel.getLvFloorAllocateData()).observe(
                 this, value ->{
-                    Log.d(TAG, "onCreate: value: "+value);
+                    Log.d(TAG, "getLvFloorAllocateData: value: "+value);
 
                     if (value!=0){
                         setFloorSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvUnitAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "getLvUnitAllocateData: value: "+value);
+
+                    if (value!=0){
+                        setUnitSpinnerData();
+                    }else {
+                        viewModel.getCheckListAllocateDataFromDB();
+                        unitSpin.setVisibility(View.GONE);
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvSubUnitAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "getLvSubUnitAllocateData: value: "+value);
+
+                    if (value!=0){
+                        setSubUnitSpinnerData();
+                    }else {
+                        viewModel.getCheckListAllocateDataFromDB();
+                        subunitspin.setVisibility(View.GONE);
+                        //displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvCheckListAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "getLvCheckListAllocateData: value: "+value);
+                    if (value!=0){
+                        setCheckListSpinnerData();
+                    }else {
+                        displayErrorDialog("Error","No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvGroupListAllocateData()).observe(
+                this, value ->{
+                    Log.d(TAG, "getLvGroupListAllocateData: value: "+value);
+                    if (value!=0){
+                        setGroupSpinnerData();
                     }else {
                         displayErrorDialog("Error","No Data");
                     }
@@ -472,21 +509,6 @@ public class SelectQuestion extends CustomTitle {
         callService1();
     }
 
-    public void updateData() {
-        // requestid = 1;
-        /***** AKSHAY *****/
-        /*
-         * method = "getDetails"; param = new String[] { "userID","userRole" };
-         * value = new String[] { db.userId,"maker" };
-         */
-        /***** AKSHAY *****/
-        // Changes made 24-April-2015
-        method = "getClientProjectWorkType";
-        param = new String[]{"userID", "userRole"};
-        value = new String[]{db.userId, "maker"};
-        callService();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -494,16 +516,6 @@ public class SelectQuestion extends CustomTitle {
         if (db.userId.equalsIgnoreCase("")) {
             //logout();
         }
-    }
-
-    private void logout() {
-        finish();
-        Toast.makeText(SelectQuestion.this, "Session expired... Please login.",
-                Toast.LENGTH_SHORT).show();
-        Intent logout = new Intent(SelectQuestion.this, LoginScreen.class);
-        logout.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        db.copyDatabase(getApplicationContext(), "RFI.db");
-        startActivity(logout);
     }
 
     public void setSpiner() {
@@ -549,35 +561,6 @@ public class SelectQuestion extends CustomTitle {
         boolean validate = true;
         System.out.println("In validate method");
         System.out.println("Value os isCoverageSpinner : " + isCoverageSpinner);
-        /*
-         * if (schemeSpin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Project"; } else if
-         * (buildingSpin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Structure"; } else if
-         * (floorSpin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Stage"; } else if (tradeSpin.getSelectedItemPosition()
-         * == 0) { errorMessage = "Please Select Trade"; } else if
-         * (checklistspin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Check List"; } else if
-         * (subgrpSpin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Sub Group"; } else if (db.contr &&
-         * contractorspin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Contractor"; }else if (db.contractor_flag &&
-         * contractorspin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Allocate Contractor"; } else if
-         * (supervisorspin.getSelectedItemPosition() == 0 &&
-         * foremanspin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Atleast Supervisor or Foreman"; }else if
-         * ((db.supervisor_flag) && foremanspin.getSelectedItemPosition() == 0)
-         * { errorMessage = "Please Select Foreman"; }else if
-         * (supervisorspin.getSelectedItemPosition() == 0 && db.foreman_flag
-         * foremanspin.getSelectedItemPosition() == 0) { errorMessage =
-         * "Please Select Supervisor"; }else if
-         * (clientspin.getSelectedItemPosition() == 0 ) { errorMessage =
-         * "Please Select client"; }
-         */
-        /***** AKSHAY *****/
-        // CHANGE MADE ON : 7-MAY-2015
         if (isCoverageSpinner) {
             if (noRfi == 1) {
                 errorMessage = "No Coverage available Please select another combination.";
@@ -945,7 +928,6 @@ public class SelectQuestion extends CustomTitle {
             buildingID[i] = model.getBuildingId();
         }
 
-
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, buildingName);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1018,6 +1000,7 @@ public class SelectQuestion extends CustomTitle {
                 if (position > 0) {
                     db.selectedFloorId = floorID[position].toString();
                     db.selectedNodeId = floorID[position].toString();
+                    viewModel.getUnitDataFromDB();
                     /*
                     Cursor cursor = db.select("Unit u, AllocateTask a", "distinct(u.Unit_Des),u.Unit_ID", "u.Unit_ID = a.Unit AND u.Fk_Floor_ID = '" + db.selectedFloorId + "' AND u.Unit_Scheme_ID = '" + db.selectedSchemeId + "'", null, null, null, null);
                     String[] unitName = new String[cursor.getCount() + 1];
@@ -1030,12 +1013,9 @@ public class SelectQuestion extends CustomTitle {
                         checklistspin.setClickable(true);
                         checklistspin.setSelection(0);
                     }*/
-
-
                 } else {
                     unitSpin.setClickable(false);
                     unitSpin.setSelection(0);
-
                     subunitspin.setClickable(false);
                     subunitspin.setSelection(0);
                     elementspin.setClickable(false);
@@ -1061,67 +1041,18 @@ public class SelectQuestion extends CustomTitle {
         });
     }
 
-    private void setUnitSpinnerData(String floor_id, final String schemid) {
+    private void setUnitSpinnerData() {
 
-        // TABLE Unit(Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id TEXT,Fk_Floor_ID
-        // TEXT, user_id TEXT)");
-
-	/*	String where = "u.Unit_Scheme_id=s.PK_Scheme_ID" + " AND s.user_id='"
-				+ db.userId + "'  AND u.Fk_Floor_ID ='" + floor_id
-				+ "'  AND u.FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-				+ "'  AND u.Unit_Scheme_id='" + schemid
-				+ "' AND u.user_id=s.user_id ";
-		System.out.println("where ->" + where);
-		Cursor cursor = db.select("Unit as u,Scheme as s",
-				"distinct(u.Unit_ID),u.Unit_Des", where, null, null, null,
-				"u.Unit_Des");
-
-		System.out.println("selected scheme id" + db.selectedBuildingId);
-
-		unitId = new String[cursor.getCount()];
-		String[] items = new String[cursor.getCount() + 1];
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-
-			do {
-				unitId[cursor.getPosition()] = cursor.getString(0);
-				System.out.println("trade id printed=" + cursor.getString(0));
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-				System.out.println("trade name printed=" + cursor.getString(1));
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "Unit(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}
-
-		final String where1 = "FK_WorkTyp_ID ='" + db.selectedWorkTypeId
-				+ "' AND user_id='" + db.userId + "'";
-		final String table = "SubUnit"; */
-
-        Cursor cursor = db.select("Unit u, AllocateTask a",
-                "distinct(u.Unit_Des),u.Unit_ID", "u.Unit_ID = a.Unit AND u.Fk_Floor_ID = '" + db.selectedFloorId +
-                        "' AND u.Unit_Scheme_ID = '" + db.selectedSchemeId + "'", null, null, null, null);
-        final String[] unitID = new String[cursor.getCount()];
-        String[] unitName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                unitName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    unitName[i] = cursor.getString(0);
-                    unitID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //Toast.makeText(SelectQuestion.this, "No Units....Setting CheckList", Toast.LENGTH_SHORT).show();
-            setCheckListSpinnerData();
+        ArrayList<UnitAllocateTaskModel> list = viewModel.getListOfUnitAllocateTaskModel();
+        int size = list.size();
+        final Integer[] unitID = new Integer[size];
+        String[] unitName = new String[size];
+        for(int i =0; i<size; i++){
+            UnitAllocateTaskModel model = list.get(i);
+            unitName[i] = model.getUnitName();
+            unitID[i] = model.getUnitId();
+        }
+        if (size == 0){
             checklistspin.setClickable(true);
             checklistspin.setSelection(0);
         }
@@ -1137,62 +1068,9 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedUnitId = unitID[position - 1];
-                    db.selectedNodeId = unitID[position - 1];
-
-                    System.out.println("Selected Unit ID = " + db.selectedUnitId);
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 30-APRIL-2015
-                    // setSubUnitSpinnerData(unitId[position - 1],schemid);
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=4) {
-                     * setSubUnitSpinnerData(unitId[position - 1],schemid);
-                     * subunitspin.setClickable(true);
-                     * subunitspin.setSelection(0); }
-                     *//***** AKSHAY *****/
-
-		/*			if (isDataAvialableForID("SubUnit", "FK_Unit_ID",
-							db.selectedUnitId)) {
-						setSubUnitSpinnerData(db.selectedUnitId,
-								db.selectedSchemeId);
-						subunitspin.setClickable(true);
-						subunitspin.setSelection(0);
-					} else {
-						method = "getSubUnit";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId,
-								db.selectedUnitId };
-						callSubUnitService();
-					} */
-
-                    Cursor cursor = db.select("SubUnit s, AllocateTask a",
-                            "distinct(s.Sub_Unit_Des),s.Sub_Unit_ID", "s.Sub_Unit_ID = a.SubUnit AND s.FK_Unit_ID in(" + db.selectedUnitId + ") " +
-                                    "AND s.Sub_Unit_Scheme_id ='" + db.selectedSchemeId + "'", null, null, null, null);
-                    if (cursor.getCount() > 0) {
-                        setSubUnitSpinnerData(db.selectedUnitId, db.selectedSchemeId);
-                        subunitspin.setClickable(true);
-                        subunitspin.setSelection(0);
-                    } else {
-                        setCheckListSpinnerData();
-                        checklistspin.setSelected(true);
-                        checklistspin.setSelection(0);
-                    }
-
-
-//                    setSubUnitSpinnerData(db.selectedUnitId, db.selectedSchemeId);
-//                    subunitspin.setClickable(true);
-//                    subunitspin.setSelection(0);
-
-
+                    db.selectedUnitId = unitID[position].toString();
+                    db.selectedNodeId = unitID[position].toString();
+                    viewModel.getSubUnitAllocateDataFromDB();
                 } else {
                     subunitspin.setClickable(false);
                     subunitspin.setSelection(0);
@@ -1209,8 +1087,6 @@ public class SelectQuestion extends CustomTitle {
                     db.selectedSubUnitId = "";
                     db.selectedElementId = "";
                     db.selectedSubElementId = "";
-
-                    System.out.println("hello else unit");
                 }
             }
 
@@ -1218,7 +1094,7 @@ public class SelectQuestion extends CustomTitle {
             }
         });
 
-        if (isUnit && unitName.length > 0) {
+        /*if (isUnit && unitName.length > 0) {
             unitSpin.setVisibility(View.GONE);
             unitSpinMulti.setVisibility(View.VISIBLE);
 
@@ -1254,41 +1130,23 @@ public class SelectQuestion extends CustomTitle {
         } else {
             unitSpin.setVisibility(View.VISIBLE);
             unitSpinMulti.setVisibility(View.GONE);
-        }
+        }*/
 
 
     }
 
-    private void setSubUnitSpinnerData(String unit_id, final String schemid) {
+    private void setSubUnitSpinnerData() {
 
-        // TABLE Unit(Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id TEXT,Fk_Floor_ID
-        // TEXT, user_id TEXT)");
-        // SubUnit(Sub_Unit_ID TEXT,Sub_Unit_Des TEXT,Sub_Unit_Scheme_id
-        // TEXT,FK_Unit_ID TEXT, user_id TEXT)");
-
-        Cursor cursor = db.select("SubUnit s, AllocateTask a",
-                "distinct(s.Sub_Unit_Des),s.Sub_Unit_ID", "s.Sub_Unit_ID = a.SubUnit AND s.FK_Unit_ID in(" + db.selectedUnitId + ") " +
-                        "AND s.Sub_Unit_Scheme_id ='" + db.selectedSchemeId + "'", null, null, null, null);
-        final String[] subUnitID = new String[cursor.getCount()];
-        String[] subUnitName = new String[cursor.getCount() + 1];
-        subUnitName[0] = "--- SELECT ---";
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                subUnitName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    subUnitName[i] = cursor.getString(0);
-                    subUnitID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //System.out.println("in sub units........");
-            //Toast.makeText(SelectQuestion.this, "No SubUnits....Setting CheckList", Toast.LENGTH_SHORT).show();
-            setCheckListSpinnerData();
+        ArrayList<SubUnitAllocateTaskModel> list = viewModel.getListOfSubUnitAllocateTaskModel();
+        int size = list.size();
+        final Integer[] subUnitID = new Integer[size];
+        String[] subUnitName = new String[size];
+        for(int i =0; i<size; i++){
+            SubUnitAllocateTaskModel model = list.get(i);
+            subUnitName[i] = model.getSubUnitName();
+            subUnitID[i] = model.getSubUnitId();
+        }
+        if (size == 0){
             checklistspin.setClickable(true);
             checklistspin.setSelection(0);
         }
@@ -1304,69 +1162,11 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedSubUnitId = subUnitID[position - 1];
-                    db.selectedNodeId = subUnitID[position - 1];
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 30-APRIL-2015
-                    // setElementSpinnerData(subunitId[position - 1],schemid);
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=5) {
-                     * setElementSpinnerData(subunitId[position - 1],schemid);
-                     * elementspin.setClickable(true);
-                     * elementspin.setSelection(0); }
-                     */
-
-		/*			if (isDataAvialableForID("Element", "FK_Sub_Unit_ID",
-							db.selectedSubUnitId)) {
-						setElementSpinnerData(db.selectedSubUnitId,
-								db.selectedSchemeId);
-						elementspin.setClickable(true);
-						elementspin.setSelection(0);
-					} else {
-
-						method = "getElement";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId,
-								db.selectedSubUnitId };
-						callElementService();
-
-					}   */
-
-				/*	setElementSpinnerData(db.selectedSubUnitId,db.selectedSchemeId);
-					elementspin.setClickable(true);
-					elementspin.setSelection(0); */
-                    Cursor cursor = db.select("Element e, AllocateTask a", "distinct(e.Elmt_Des),e.Elmt_ID",
-                            "e.Elmt_ID = a.Element AND e.FK_Sub_Unit_ID = '" + db.selectedSubUnitId + "' AND e.Elmt_Scheme_id = '" + db.selectedSchemeId + "'",
-                            null, null, null, null);
-//                    final String[] elementID = new String[cursor.getCount()];
-//                    String[] elementName = new String[cursor.getCount() + 1];
-                    if (cursor.getCount() > 0) {
-                        setElementSpinnerData(db.selectedSubUnitId, db.selectedSchemeId);
-                        elementspin.setClickable(true);
-                        elementspin.setSelection(0);
-                    } else {
-                        setCheckListSpinnerData();
-                        checklistspin.setSelected(true);
-                        checklistspin.setSelection(0);
-                    }
+                    db.selectedSubUnitId = subUnitID[position].toString();
+                    db.selectedNodeId = subUnitID[position].toString();
 
                 } else {
-
                     try {
-                        //	elementspin.setClickable(false);
-                        //elementspin.setSelection(0);
-                        //subelementspin.setClickable(false);
-                        //subelementspin.setSelection(0);
-
                         db.selectedChecklistId = "";
                         db.selectedSubGroupId = "";
                         db.selectedSubUnitId = "";
@@ -1384,7 +1184,7 @@ public class SelectQuestion extends CustomTitle {
         });
 
 
-        if (isSubUnit && subUnitName.length > 0) {
+        /*if (isSubUnit && subUnitName.length > 0) {
             subunitspin.setVisibility(View.GONE);
             subUnitSpinMulti.setVisibility(View.VISIBLE);
             subUnitSpinMulti.setItems(subUnitName);
@@ -1406,7 +1206,6 @@ public class SelectQuestion extends CustomTitle {
                         }
 
                     }
-                    setElementSpinnerData(db.selectedSubUnitId, db.selectedSchemeId);
 
                 }
 
@@ -1419,299 +1218,8 @@ public class SelectQuestion extends CustomTitle {
         } else {
             subunitspin.setVisibility(View.VISIBLE);
             subUnitSpinMulti.setVisibility(View.GONE);
-        }
+        }*/
 
-
-    }
-
-    private void setElementSpinnerData(String subunit_id, final String schemid) {
-
-        // Element(Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID
-        // TEXT, user_id TEXT)");
-
-        Cursor cursor = db.select("Element e, AllocateTask a",
-                "distinct(e.Elmt_Des),e.Elmt_ID",
-                "e.Elmt_ID = a.Element AND e.FK_Sub_Unit_ID in (" +
-                        db.selectedSubUnitId + ") AND e.Elmt_Scheme_id = '"
-                        + db.selectedSchemeId + "'", null, null, null, null);
-        final String[] elementID = new String[cursor.getCount()];
-        String[] elementName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                elementName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    elementName[i] = cursor.getString(0);
-                    elementID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //Toast.makeText(SelectQuestion.this, "No Elements....Setting CheckList", Toast.LENGTH_SHORT).show();
-            setCheckListSpinnerData();
-            checklistspin.setClickable(true);
-            checklistspin.setSelection(0);
-
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, elementName);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        elementspin.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-
-        elementspin.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-            public void onItemSelected(AdapterView<?> aview, View view,
-                                       int position, long rowid) {
-                if (position > 0) {
-                    db.selectedElementId = elementID[position - 1];
-                    db.selectedNodeId = elementID[position - 1];
-                    // setSubElementSpinnerData(elementId[position -
-                    // 1],schemid);
-
-                    /***** AKSHAY *****/
-                    // CHANGES MADE ON : 30-APRIL-2015
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *
-                     *
-                     * if(CheckWorkType(table, where1) &&
-                     * Integer.parseInt(db.selectedlevelId)>=6) {
-                     * setSubElementSpinnerData(elementId[position -
-                     * 1],schemid); subelementspin.setClickable(true);
-                     * subelementspin.setSelection(0); }
-                     *//***** AKSHAY *****/
-
-	/*				if (isDataAvialableForID("SubElement", "FK_Elmt_ID",
-							db.selectedElementId)) {
-						setSubElementSpinnerData(db.selectedElementId,
-								db.selectedSchemeId);
-						subelementspin.setClickable(true);
-						subelementspin.setSelection(0);
-					} else {
-						method = "getSubElement";
-						param = new String[] { "userID", "userRole",
-								"projectId", "workTypeId", "parentId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedSchemeId, db.selectedWorkTypeId,
-								db.selectedElementId };
-						callSubElementService();
-					}    */
-                    Cursor cursor = db.select("SubElement s, AllocateTask a",
-                            "distinct(s.Sub_Elmt_Des),s.Sub_Elmt_ID", "s.Sub_Elmt_ID = a.SubElement AND s.FK_Elmt_ID in (" + db.selectedElementId + ") AND s.Sub_Elmt_Scheme_id = '"
-                                    + db.selectedSchemeId + "'", null, null, null, null);
-//                    final String[] elementID = new String[cursor.getCount()];
-//                    String[] elementName = new String[cursor.getCount() + 1];
-                    if (cursor.getCount() > 0) {
-                        setSubElementSpinnerData(db.selectedElementId, db.selectedSchemeId);
-                        subelementspin.setClickable(true);
-                        subelementspin.setSelection(0);
-                    } else {
-                        setCheckListSpinnerData();
-                        checklistspin.setSelected(true);
-                        checklistspin.setSelection(0);
-                    }
-//                    setSubElementSpinnerData(db.selectedElementId, db.selectedSchemeId);
-//                    subelementspin.setClickable(true);
-//                    subelementspin.setSelection(0);
-
-                } else {
-                    subelementspin.setClickable(false);
-                    subelementspin.setSelection(0);
-                    checklistspin.setClickable(true);
-                    checklistspin.setSelection(0);
-
-                    db.selectedChecklistId = "";
-                    db.selectedSubGroupId = "";
-                    db.selectedElementId = "";
-                    db.selectedSubElementId = "";
-
-                    System.out.println("hello");
-                }
-            }
-
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
-
-        if (isElement && elementName.length > 0) {
-            elementSpinMulti.setItems(elementName);
-            elementSpinMulti.hasNoneOption(true);
-            elementSpinMulti.setSelection(new int[]{0});
-            elementSpinMulti.setListener(new MultiSelectSpinner.OnMultipleItemsSelectedListener() {
-                @Override
-                public void selectedIndices(List<Integer> indices) {
-                    db.selectedNodeId = "";
-                    db.selectedElementId = "";
-                    for (int count = 0; count < indices.size(); count++) {
-                        if (count == indices.size() - 1) {
-                            db.selectedNodeId += elementID[indices.get(count) - 1];
-
-                            db.selectedElementId += elementID[indices.get(count) - 1];
-                        } else {
-                            db.selectedNodeId += elementID[indices.get(count) - 1] + ",";
-                            db.selectedElementId += elementID[indices.get(count) - 1] + ",";
-                        }
-
-                    }
-                    setSubElementSpinnerData(db.selectedElementId, db.selectedSchemeId);
-
-                }
-
-                @Override
-                public void selectedStrings(List<String> strings) {
-
-                }
-            });
-
-            elementspin.setVisibility(View.GONE);
-            elementSpinMulti.setVisibility(View.VISIBLE);
-        } else {
-            elementspin.setVisibility(View.VISIBLE);
-            elementSpinMulti.setVisibility(View.GONE);
-        }
-
-
-    }
-
-    private void setSubElementSpinnerData(String element_id,
-                                          final String schemid) {
-
-        // Element(Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID
-        // TEXT, user_id TEXT)");
-
-        // SubElement(Sub_Elmt_ID TEXT,Sub_Elmt_Des TEXT,Sub_Elmt_Scheme_id
-        // TEXT,FK_Elmt_ID TEXT, user_id TEXT)");
-
-
-        Cursor cursor = db.select("SubElement s, AllocateTask a",
-                "distinct(s.Sub_Elmt_Des),s.Sub_Elmt_ID", "s.Sub_Elmt_ID = a.SubElement AND s.FK_Elmt_ID in (" + db.selectedElementId + ") AND s.Sub_Elmt_Scheme_id = '"
-                        + db.selectedSchemeId + "'", null, null, null, null);
-        final String[] subelementID = new String[cursor.getCount()];
-        String[] subelementName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                subelementName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    subelementName[i] = cursor.getString(0);
-                    subelementID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //Toast.makeText(SelectQuestion.this, "No SubElements....Setting CheckList", Toast.LENGTH_SHORT).show();
-            setCheckListSpinnerData();
-            checklistspin.setClickable(true);
-            checklistspin.setSelection(0);
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, subelementName);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        subelementspin.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-
-        subelementspin.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-            public void onItemSelected(AdapterView<?> aview, View view,
-                                       int position, long rowid) {
-                if (position > 0) {
-                    db.selectedSubElementId = subelementID[position - 1];
-                    db.selectedNodeId = subelementID[position - 1];
-
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 4-MAY-2015
-                    /*
-                     * setCheckListSpinnerData();
-                     * checklistspin.setClickable(true);
-                     * checklistspin.setSelection(0);
-                     *//***** AKSHAY *****/
-
-			/*		if (isDataAvialableInCheckList(db.selectedNodeId,
-							db.selectedWorkTypeId, db.userId)) {
-						setCheckListSpinnerData();
-						checklistspin.setClickable(true);
-						checklistspin.setSelection(0);
-					} else {
-						method = "getCheckList";
-						param = new String[] { "userID", "userRole",
-								"workTypeId", "nodeId" };
-						value = new String[] { db.userId, "maker",
-								db.selectedWorkTypeId, db.selectedNodeId };
-						callCheckListService();
-					} */
-
-                    setCheckListSpinnerData();
-                    checklistspin.setClickable(true);
-                    checklistspin.setSelection(0);
-
-                } else {
-
-                    checklistspin.setClickable(false);
-                    checklistspin.setSelection(0);
-                    grouptspin.setClickable(false);
-                    grouptspin.setSelection(0);
-
-                    db.selectedChecklistId = "";
-                    db.selectedSubGroupId = "";
-                    db.selectedSubElementId = "";
-
-                    System.out.println("else subelement ");
-                }
-            }
-
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
-
-        if (isSubElement && subelementName.length > 0) {
-            subElementSpinMulti.setVisibility(View.VISIBLE);
-            subelementspin.setVisibility(View.GONE);
-            subElementSpinMulti.hasNoneOption(true);
-            subElementSpinMulti.setSelection(new int[]{0});
-            groupSpinMulti.setListener(new MultiSelectSpinner.OnMultipleItemsSelectedListener() {
-                @Override
-                public void selectedIndices(List<Integer> indices) {
-                    db.selectedNodeId = "";
-                    db.selectedSubElementId = "";
-                    for (int count = 0; count < indices.size(); count++) {
-                        if (count == indices.size() - 1) {
-                            db.selectedNodeId += subelementID[indices.get(count) - 1];
-
-                            db.selectedSubElementId += subelementID[indices.get(count) - 1];
-                        } else {
-                            db.selectedNodeId += subelementID[indices.get(count) - 1] + ",";
-                            db.selectedSubElementId += subelementID[indices.get(count) - 1] + ",";
-                        }
-
-                    }
-
-                }
-
-                @Override
-                public void selectedStrings(List<String> strings) {
-
-
-                }
-            });
-        } else {
-//            subElementSpinMulti.setVisibility(View.GONE);
-            subelementspin.setVisibility(View.VISIBLE);
-            Log.d("CheckList", "cursor.getString(0)");
-
-        }
-
-//        subElementSpinMulti.setItems(subelementName);
 
     }
 
@@ -1744,42 +1252,15 @@ public class SelectQuestion extends CustomTitle {
 
     private void setCheckListSpinnerData() {
         checklistspin.setClickable(true);
-        // Element(Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID
-        // TEXT, user_id TEXT)");
-
-        // CheckList(Checklist_ID TEXT,Checklist_Name TEXT,Node_Id TEXT, user_id
-        // TEXT)");
-        //Toast.makeText(getApplicationContext(), "In CheckList Method", Toast.LENGTH_SHORT).show();
-        Cursor cursor = db.select("CheckList c, AllocateTask a",
-                "distinct(c.CheckList_Name), c.CheckList_ID",
-                "c.CheckList_ID = a.CheckList AND c.FK_WorkTyp_ID = '"
-                        + db.selectedWorkTypeId + "' AND a.NodeID = '" + db.selectedNodeId + "'", null, null, null, null);
-        final String[] checklistID = new String[cursor.getCount()];
-        String[] checklistName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                checklistName[i] = "--- SELECT ---";
-                do {
-                    System.out.println("======================-----" + cursor.getString(0));
-                    i++;
-                    checklistName[i] = cursor.getString(0);
-                    checklistID[i - 1] = cursor.getString(1);
-
-                } while (cursor.moveToNext());
-            } else {
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //Toast.makeText(SelectQuestion.this, "No CheckLists....Setting CheckList", Toast.LENGTH_SHORT).show();
+        ArrayList<CheckListAllocateTaskModel> list = viewModel.getListOfCheckListAllocateTaskModel();
+        int size = list.size();
+        final Integer[] checklistID = new Integer[size];
+        String[] checklistName = new String[size];
+        for(int i =0; i<size; i++){
+            CheckListAllocateTaskModel model = list.get(i);
+            checklistName[i] = model.getCheckListName();
+            checklistID[i] = model.getCheckListId();
         }
-
-		/*ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, checklistName);
-
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		checklistspin.setAdapter(adapter);
-		adapter.notifyDataSetChanged();*/
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, checklistName);
@@ -1792,31 +1273,10 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedChecklistId = checklistID[position - 1];
+                    db.selectedChecklistId = checklistID[position].toString();
                     db.selectedChecklistName = checklistspin.getSelectedItem()
                             .toString();
-                    /***** AKSHAY *****/
-                    // CHANGE MADE ON : 4-MAY-2015
-                    /*
-                     * setGoupSpinnerData(checklistId[position - 1]);
-                     * grouptspin.setClickable(true);
-                     * grouptspin.setSelection(0);
-                     */
-					/*if (isDataAvialableForID("Group1", "FK_Checklist_ID",
-							db.selectedChecklistId)) {
-						setGoupSpinnerData(checklistId[position - 1]);
-						grouptspin.setClickable(true);
-						grouptspin.setSelection(0);
-					} else {*/
-                    method = "getGroup";
-                    param = new String[]{"userID", "userRole", "nodeId",
-                            "checkListId"};
-                    value = new String[]{db.userId, "maker",
-                            db.selectedNodeId, db.selectedChecklistId};
-                    callGroupService();
-                    //	}
-
-                    setGoupSpinnerData(checklistID[position - 1]);
+                    viewModel.getGroupAllocateDataFromDB();
                     grouptspin.setClickable(true);
                     grouptspin.setSelection(0);
 
@@ -1835,73 +1295,21 @@ public class SelectQuestion extends CustomTitle {
         });
     }
 
-    private void setGoupSpinnerData(final String checklistId) {
+    private void setGroupSpinnerData() {
 
-        // Element(Elmt_ID TEXT,Elmt_Des TEXT,Elmt_Scheme_id TEXT,FK_Sub_Unit_ID
-        // TEXT, user_id TEXT)");
-
-        // Group1(Grp_ID TEXT,Grp_Name TEXT,Node_id TEXT,FK_Checklist_ID
-        // TEXT,user_id TEXT)");
-
-	/*	String where = "c.Checklist_ID='" + checklistId + "' AND g.Node_id='"
-				+ db.selectedNodeId
-				+ "'  AND  g.FK_Checklist_ID=c.Checklist_ID"
-				+ " AND c.user_id='" + db.userId
-
-				+ "' AND g.user_id=c.user_id ";
-		System.out.println("where ->" + where);
-		Cursor cursor = db.select("Group1 as g,CheckList as c",
-				"distinct(g.Grp_ID),g.Grp_Name,g.Node_id", where, null, null,
-				null, "g.Grp_Name");
-
-		// System.out.println("selected scheme id"+db.selectedBuildingId);
-
-		groupId = new String[cursor.getCount()];
-
-		String[] items = new String[cursor.getCount() + 1];
-		items[0] = "--Select--";
-		if (cursor.moveToFirst()) {
-
-			do {
-				groupId[cursor.getPosition()] = cursor.getString(0);
-
-				items[cursor.getPosition() + 1] = cursor.getString(1);
-
-				System.out
-						.println("goup id==" + cursor.getString(2).toString());
-			} while (cursor.moveToNext());
-		} else {
-			items[0] = "Group(s) not available";
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}     */
-        //	Toast.makeText(SelectQuestion.this, "No Groups....Setting CheckList", Toast.LENGTH_SHORT).show();
-        System.out.println("setting data to gropu spinner");
-        Cursor cursor = db.select("Group1 g, AllocateTask a",
-                "distinct(g.Grp_Name),g.Grp_ID",
-                "g.Grp_ID = a.GroupColumn AND g.FK_Checklist_ID = '" +
-                        db.selectedChecklistId + "'", null, null, null, "g.GRP_Sequence_tint");
-        final String[] groupID = new String[cursor.getCount()];
-        final String[] groupName = new String[cursor.getCount() + 1];
-        if (cursor.getCount() > 0) {
-            if (cursor.moveToFirst()) {
-                int i = 0;
-                groupName[i] = "--- SELECT ---";
-                do {
-                    i++;
-                    groupName[i] = cursor.getString(0);
-                    groupID[i - 1] = cursor.getString(1);
-                    System.out.println("Printed group ID to print=========" + groupID[i - 1]);
-                    isGroupDataAvailable = true;
-                } while (cursor.moveToNext());
-            } else {
-                isGroupDataAvailable = false;
-                displayDialog("Sorry!", "No Data");
-            }
-        } else {
-            //Toast.makeText(SelectQuestion.this, "No Groups....Setting CheckList", Toast.LENGTH_SHORT).show();
+        ArrayList<GroupListAllocateTaskModel> list = viewModel.getListOfGroupListAllocateTaskModel();
+        int size = list.size();
+        final Integer[] groupID = new Integer[size];
+        String[] groupName = new String[size];
+        for(int i =0; i<size; i++){
+            GroupListAllocateTaskModel model = list.get(i);
+            groupName[i] = model.getGroupName();
+            groupID[i] = model.getGroupId();
+        }
+        if (size != 0){
+            isGroupDataAvailable = true;
+        }else {
+            isGroupDataAvailable = false;
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, groupName);
@@ -1913,27 +1321,15 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
-                    db.selectedGroupId = groupID[position - 1];
+                    db.selectedGroupId = groupID[position].toString();
                     System.out.println("Selected Group ID is : "
                             + db.selectedGroupId);
 
-                    db.selectedGroupName = groupName[position - 1];
-                    coverageData();
-                    /*
-                     * // System.out.println("Size Of Group List is : " +
-                     * groupList.size());
-                     * db.selectedGroupName=grouptspin.getSelectedItem
-                     * ().toString(); String listIndexGroup = ""; for(int i = 0;
-                     * i < groupList.size(); i++) {
-                     * System.out.println("Iteration : " + i); Group temp =
-                     * groupList.get(i); if(temp.getGroupID() ==
-                     * db.selectedGroupId) { listIndexGroup =
-                     * temp.getGroupSequenceInt();
-                     * System.out.println("Selected Group Sequence Number is : "
-                     * + listIndexGroup); break; } else { continue; } }
-                     */
+                    db.selectedGroupName = groupName[position];
+                    //coverageData();
+
                     System.out.println("selected group===" + db.selectedGroupId);
-                    if (isSelectedGroupSequenceOne(db.selectedGroupId)) {
+                    /*if (isSelectedGroupSequenceOne(db.selectedGroupId)) {
                         if (isCoverageSpinner) {
                             isCoverageSpinner = false;
                             isCoverageTextViewNew = true;
@@ -1959,69 +1355,7 @@ public class SelectQuestion extends CustomTitle {
                             }
                         }
                         System.out.println("Enter Coverage Manually!!!");
-                    } else {
-                        if (isCoverageSpinner) {
-                            method = "getCoverage";
-                            param = new String[]{"nodeId", "checkListId"};
-                            value = new String[]{db.selectedNodeId,
-                                    db.selectedChecklistId};
-                            // value = new String[] { "29","1"};
-                            callCoverageService();
-                        } else {
-                            View change;
-                            if (isCoverageTextViewNew) {
-                                change = (View) findViewById(R.id.coverage_id_edittext);
-                            } else {
-                                change = (View) findViewById(R.id.coverage_id);
-                            }
-                            ViewGroup parent = (ViewGroup) change.getParent();
-                            int index = parent.indexOfChild(change);
-                            parent.removeView(change);
-                            LayoutInflater inflater = getLayoutInflater();
-                            change = inflater.inflate(
-                                    R.layout.select_question_coverage_spinner,
-                                    parent, false);
-                            parent.addView(change, index);
-                            coverageSpinner = (Spinner) findViewById(R.id.coverage_id_spinner);
-                            isCoverageSpinner = true;
-                            method = "getCoverage";
-                            param = new String[]{"nodeId", "checkListId"};
-                            value = new String[]{db.selectedNodeId,
-                                    db.selectedChecklistId};
-                            // value = new String[] { "29","1"};
-                            callCoverageService();
-                        }
-                    }
-                    /*
-                     * groupList.clear();
-                     * if(listIndexGroup.equalsIgnoreCase("1")) {
-                     * System.out.println("Enter Coverage Manually!!!"); } else
-                     * { View change = (View) findViewById(R.id.coverage_id);
-                     * ViewGroup parent = (ViewGroup) change.getParent(); int
-                     * index = parent.indexOfChild(change);
-                     * parent.removeView(change); LayoutInflater inflater =
-                     * getLayoutInflater(); change =
-                     * inflater.inflate(R.layout.select_question_coverage_spinner
-                     * , parent, false); parent.addView(change, index);
-                     * coverageSpinner = (Spinner)
-                     * findViewById(R.id.coverage_id_spinner); method =
-                     * "getCoverage"; param = new String[] {
-                     * "nodeId","checkListId"}; value = new String[] {
-                     * db.selectedNodeId,db.selectedChecklistId};
-                     * callCoverageService(); }
-                     */
-                    if (isQuestionAvailable()) {
-                        System.out
-                                .println("Data Already Available in Question table");
-                    } else {
-                        method = "getQuestion";
-                        param = new String[]{"userID", "userRole", "nodeId",
-                                "groupId"};
-                        value = new String[]{db.userId, "maker",
-                                db.selectedNodeId, db.selectedGroupId};
-                        callQuestionService();
-                    }
-
+                    }*/
                 } else {
                     db.selectedGroupId = "";
                     System.out.println("else..................");
@@ -2185,855 +1519,6 @@ public class SelectQuestion extends CustomTitle {
         service.execute("");
     }
 
-    // -------------------------------------------------------------------------balaji
-    // code-----------
-    protected void callService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-
-                responseData = data;
-                System.out.println("success data");
-                saveData(data);
-
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    protected void callStructureService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-
-                responseData = data;
-                System.out.println("success data");
-                saveStructureData(data);
-
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    protected void saveStructureData(String data) {
-        // TODO Auto-generated method stub
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No Data!!!");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray structureArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < structureArray.length(); i++) {
-                    JSONObject structureObject = structureArray
-                            .getJSONObject(i);
-                    String building_id = structureObject.getString("NODE_Id");
-                    String building_name = structureObject
-                            .getString("NODE_Description_var");
-                    String building_project_id = structureObject
-                            .getString("NODE_PRJ_Id");
-                    String parent_id = structureObject
-                            .getString("NODE_Parent_Id");
-                    String fk_worktype_id = structureObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "Bldg_ID,Bldg_Name,Build_scheme_id,FK_WorkTyp_ID,user_id";
-                    String values = "'" + building_id + "','" + building_name
-                            + "','" + building_project_id + "','"
-                            + fk_worktype_id + "','" + db.userId + "'";
-                    db.insert("Building", column, values);
-                }
-                //setBulidngSpinnerData(db.selectedSchemeId);
-                structureSpin.setClickable(true);
-                structureSpin.setSelection(0);
-
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callStageService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveStageData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveStageData(String data) {
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No DATA!!!");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray stageArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < stageArray.length(); i++) {
-                    JSONObject stageObject = stageArray.getJSONObject(i);
-                    String floor_id = stageObject.getString("NODE_Id");
-                    String floor_name = stageObject
-                            .getString("NODE_Description_var");
-                    String floor_scheme_id = stageObject
-                            .getString("NODE_PRJ_Id");
-                    String fk_building_id = stageObject
-                            .getString("NODE_Parent_Id");
-                    String fk_worktype_id = stageObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "floor_Id,floor_Name,Floor_Scheme_ID,FK_Bldg_ID,FK_WorkTyp_ID,user_id";
-                    String values = "'" + floor_id + "','" + floor_name + "','"
-                            + floor_scheme_id + "','" + fk_building_id + "','"
-                            + fk_worktype_id + "','" + db.userId + "'";
-                    db.insert("floor", column, values);
-                }
-                //setFloorSpinnerData(db.selectedBuildingId, db.selectedSchemeId);
-                stageSpin.setClickable(true);
-                stageSpin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callUnitService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveUnitData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveUnitData(String data) {
-        if (data.equalsIgnoreCase("$")) {
-            unitSpin.setClickable(false);
-            subunitspin.setClickable(false);
-            elementspin.setClickable(false);
-            subelementspin.setClickable(false);
-            if (isDataAvialableInCheckList(db.selectedNodeId,
-                    db.selectedWorkTypeId, db.userId)) {
-                setCheckListSpinnerData();
-                checklistspin.setClickable(true);
-                checklistspin.setSelection(0);
-            } else {
-                method = "getCheckList";
-                param = new String[]{"userID", "userRole", "workTypeId",
-                        "nodeId"};
-                value = new String[]{db.userId, "maker",
-                        db.selectedWorkTypeId, db.selectedNodeId};
-                callCheckListService();
-            }
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray unitArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < unitArray.length(); i++) {
-                    JSONObject stageObject = unitArray.getJSONObject(i);
-                    String unit_id = stageObject.getString("NODE_Id");
-                    String unit_name = stageObject
-                            .getString("NODE_Description_var");
-                    String unit_scheme_id = stageObject
-                            .getString("NODE_PRJ_Id");
-                    String fk_floor_id = stageObject
-                            .getString("NODE_Parent_Id");
-                    String fk_worktype_id = stageObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "Unit_ID,Unit_Des,Unit_Scheme_id,Fk_Floor_ID,FK_WorkTyp_ID,user_id";
-                    String values = "'" + unit_id + "','" + unit_name + "','"
-                            + unit_scheme_id + "','" + fk_floor_id + "','"
-                            + fk_worktype_id + "','" + db.userId + "'";
-                    db.insert("Unit", column, values);
-                }
-                setUnitSpinnerData(db.selectedFloorId, db.selectedSchemeId);
-                unitSpin.setClickable(true);
-                unitSpin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callSubUnitService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveSubUnitData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveSubUnitData(String data) {
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray subunitArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < subunitArray.length(); i++) {
-                    JSONObject stageObject = subunitArray.getJSONObject(i);
-                    String sub_unit_id = stageObject.getString("NODE_Id");
-                    String sub_unit_name = stageObject
-                            .getString("NODE_Description_var");
-                    String sub_unit_scheme_id = stageObject
-                            .getString("NODE_PRJ_Id");
-                    String fk_unit_id = stageObject.getString("NODE_Parent_Id");
-                    String fk_worktype_id = stageObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "Sub_Unit_ID,Sub_Unit_Des,Sub_Unit_Scheme_id,FK_Unit_ID,FK_WorkTyp_ID,user_id";
-                    String values = "'" + sub_unit_id + "','" + sub_unit_name
-                            + "','" + sub_unit_scheme_id + "','" + fk_unit_id
-                            + "','" + fk_worktype_id + "','" + db.userId + "'";
-                    db.insert("SubUnit", column, values);
-                }
-                setSubUnitSpinnerData(db.selectedUnitId, db.selectedSchemeId);
-                subunitspin.setClickable(true);
-                subunitspin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callElementService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveElementData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveElementData(String data) {
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No Data!!!");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray elementArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < elementArray.length(); i++) {
-                    JSONObject stageObject = elementArray.getJSONObject(i);
-                    String element_id = stageObject.getString("NODE_Id");
-                    String element_name = stageObject
-                            .getString("NODE_Description_var");
-                    String element_scheme_id = stageObject
-                            .getString("NODE_PRJ_Id");
-                    String fk_sub_unit_id = stageObject
-                            .getString("NODE_Parent_Id");
-                    String fk_worktype_id = stageObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "Elmt_ID,Elmt_Des,Elmt_Scheme_id,FK_Sub_Unit_ID,FK_WorkTyp_ID,user_id";
-                    String values = "'" + element_id + "','" + element_name
-                            + "','" + element_scheme_id + "','"
-                            + fk_sub_unit_id + "','" + fk_worktype_id + "','"
-                            + db.userId + "'";
-                    db.insert("Element", column, values);
-                }
-                setElementSpinnerData(db.selectedSubUnitId, db.selectedSchemeId);
-                elementspin.setClickable(true);
-                elementspin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callSubElementService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveSubElementData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveSubElementData(String data) {
-        if (data.equalsIgnoreCase("No Record Found")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray subElementArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < subElementArray.length(); i++) {
-                    JSONObject stageObject = subElementArray.getJSONObject(i);
-                    String sub_element_id = stageObject.getString("NODE_Id");
-                    String sub_element_name = stageObject
-                            .getString("NODE_Description_var");
-                    String sub_element_scheme_id = stageObject
-                            .getString("NODE_PRJ_Id");
-                    String fk_element_id = stageObject
-                            .getString("NODE_Parent_Id");
-                    String fk_worktype_id = stageObject
-                            .getString("NDCHKL_WT_Id");
-                    String column = "Sub_Elmt_ID,Sub_Elmt_Des,Sub_Elmt_Scheme_id,FK_Elmt_ID,FK_WorkTyp_ID,user_id";
-                    String values = "'" + sub_element_id + "','"
-                            + sub_element_name + "','" + sub_element_scheme_id
-                            + "','" + fk_element_id + "','" + fk_worktype_id
-                            + "','" + db.userId + "'";
-                    db.insert("SubElement", column, values);
-                }
-                setSubElementSpinnerData(db.selectedElementId,
-                        db.selectedSchemeId);
-                subelementspin.setClickable(true);
-                subelementspin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callCheckListService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveCheckListData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveCheckListData(String data) {
-        if (data.equalsIgnoreCase("No Record Found")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray checkListArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < checkListArray.length(); i++) {
-                    JSONObject stageObject = checkListArray.getJSONObject(i);
-                    String checklist_id = stageObject.getString("CHKL_Id");
-                    String checklist_name = stageObject
-                            .getString("CHKL_Name_var");
-                    String node_id = stageObject.getString("NDUSER_NODE_Id");
-                    String worktype_id = stageObject.getString("NDUSER_WT_Id");
-                    String column = "Checklist_ID,Checklist_Name,Node_Id,FK_WorkTyp_ID,user_id";
-                    String values = "'" + checklist_id + "','" + checklist_name
-                            + "','" + node_id + "','" + worktype_id + "','"
-                            + db.userId + "'";
-                    db.insert("CheckList", column, values);
-                }
-                setCheckListSpinnerData();
-                checklistspin.setClickable(true);
-                checklistspin.setSelection(0);
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callCoverageService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                setCoverageSpinnerData(data);
-                coverageSpinner.setClickable(true);
-                coverageSpinner.setSelection(0);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void setCoverageSpinnerData(String data) {
-        if (data.equalsIgnoreCase("$")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                ArrayList<Coverage> coverageList = new ArrayList<Coverage>();
-
-                ArrayList<String> coverageNamesList = new ArrayList<String>();
-
-                JSONArray coverageArray = new JSONArray(tabledata[0]);
-                System.out.println("table data----------" + coverageArray);
-                for (int i = 0; i < coverageArray.length(); i++) {
-
-                    Coverage coverage = new Coverage();
-                    JSONObject stageObject = coverageArray.getJSONObject(i);
-
-                    String rfi_group_id = stageObject.getString("RFI_GRP_Id");
-                    String rfi_node_id = stageObject.getString("RFI_NODE_Id");
-                    String rfi_gorup_id = stageObject.getString("RFI_GRP_Id");
-                    String rfi_checklist_id = stageObject
-                            .getString("RFI_CHKL_Id");
-                    String rfi_coverage_var = stageObject
-                            .getString("RFI_Coverage_var");
-
-                    System.out.println("table data------111111----" + rfi_coverage_var);
-                    // if(db.selectedGroupName.equalsIgnoreCase(rfi_group_id)){
-                    if (db.selectedGroupId.equalsIgnoreCase(rfi_group_id)) {
-                        coverage.setRFI_GRP_Id(rfi_group_id);
-                        coverage.setRFI_NODE_Id(rfi_node_id);
-                        coverage.setRFI_CHKL_Id(rfi_checklist_id);
-
-
-                        coverage.setRFI_Coverage_var(rfi_coverage_var);
-                        if (db.selectedGroupId.equalsIgnoreCase(rfi_gorup_id)) {
-                            coverageList.add(coverage);
-                            coverageNamesList.add(rfi_coverage_var);
-                            System.out.println("table data------222222222----" + rfi_coverage_var);
-                        }
-                    }
-
-                }
-                if (coverageNamesList.size() == 0) {
-
-
-                    if (isCoverageSpinner) {
-                        isCoverageSpinner = false;
-                        isCoverageTextViewNew = true;
-                        System.out.println("In group sequence = 1 block");
-                        View change = (View) findViewById(R.id.coverage_id_spinner);
-                        ViewGroup parent = (ViewGroup) change.getParent();
-                        int index = parent.indexOfChild(change);
-                        parent.removeView(change);
-                        LayoutInflater inflater = getLayoutInflater();
-                        change = inflater.inflate(
-                                R.layout.select_question_coverage_textview,
-                                parent, false);
-                        parent.addView(change, index);
-                        coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-                        coverageedit.setEnabled(false);
-                        coverageedit.setFocusable(false);
-                        noRfi = 1;
-                        coverageedit.setFilters(new InputFilter[]{filter});
-                    } else {
-                        if (isCoverageTextViewNew) {
-
-                            coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-                            isCoverageSpinner = false;
-                        } else {
-
-                            coverageedit = (EditText) findViewById(R.id.coverage_id);
-                            isCoverageSpinner = false;
-                        }
-                    }
-
-
-                } else {
-
-                    if (coverageNamesList.size() == 0) {
-                        coverageedit = (EditText) findViewById(R.id.coverage_id);
-                        isCoverageSpinner = false;
-                    } else {
-                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                                android.R.layout.simple_spinner_item, coverageNamesList);
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                        coverageSpinner.setAdapter(adapter);
-
-                        coverageSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-                            @Override
-                            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                                /*if (i > 0) {
-                                    db.selectedCoverage = coverageNamesList.get(i);
-                                    System.out.println("Selected coverage  is : "
-                                            + db.selectedCoverage);
-                            }else {
-                                    db.selectedCoverage= coverageNamesList.get(1);
-                                }*/
-                                db.selectedCoverage = coverageNamesList.get(i);
-                                System.out.println("Selected coverage  is : "
-                                        + db.selectedCoverage);
-
-                                method = "getBitForPreviousGroup";
-                                param = new String[]{"groupId", "nodeID", "chkId",
-                                        "coverage"};
-                                value = new String[]{db.selectedGroupId, db.selectedNodeId,
-                                        db.selectedChecklistId, db.selectedCoverage};
-
-                                callPreviousPendingBit();
-                            }
-
-                            @Override
-                            public void onNothingSelected(AdapterView<?> adapterView) {
-                            }
-                        });
-                    }
-                }
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callPreviousPendingBit() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                String[] res = data.split("\\$");
-
-                try {
-                    JSONArray groupbit = new JSONArray(res[0]);
-                    System.out.println("table data----------" + groupbit);
-                    for (int i = 0; i < groupbit.length(); i++) {
-                        JSONObject stageObject = groupbit.getJSONObject(i);
-                        bit = stageObject.getString("count");
-                        System.out.println("Pending RFI bit" + bit);
-                    }
-                    //changed here
-                    //20-6-2024
-                    if (Integer.parseInt(bit) == 0) {
-                        okBtn.setVisibility(View.VISIBLE);
-                    }
-                    else {
-                        //callCoverageService();
-                        displayDialog("Error", "Previous Group is Pending..");
-                        okBtn.setVisibility(View.GONE);
-                    }
-                }
-                catch (Exception e) {
-                    Log.d(TAG, e.toString());
-                    e.printStackTrace();
-                    flushData();
-                    displayDialog("No Record Found",
-                            "Sufficient Data is not available.");
-                }
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-
-    }
-
-
-/*	public void setCoverageSpinnerData(String data) {
-		if (data.equalsIgnoreCase("$")) {
-			System.out.println("No Data");
-		} else {
-
-			try {
-
-				String[] tabledata = data.split("\\$");
-
-				ArrayList<Coverage> coverageList = new ArrayList<Coverage>();
-
-				ArrayList<String> coverageNamesList = new ArrayList<String>();
-
-				JSONArray coverageArray = new JSONArray(tabledata[0]);
-				System.out.println("table data----------"+coverageArray);
-				for (int i = 0; i < coverageArray.length(); i++) {
-
-					Coverage coverage = new Coverage();
-					JSONObject stageObject = coverageArray.getJSONObject(i);
-
-					String rfi_group_id = stageObject.getString("RFI_GRP_Id");
-					String rfi_node_id = stageObject.getString("RFI_NODE_Id");
-					String rfi_checklist_id = stageObject
-							.getString("RFI_CHKL_Id");
-					String rfi_coverage_var = stageObject
-							.getString("RFI_Coverage_var");
-
-					System.out.println("table data------111111----"+rfi_coverage_var);
-				//	if(db.selectedGroupName.equalsIgnoreCase(rfi_group_id)){
-				//	if(db.selectedGroupId.equalsIgnoreCase(rfi_group_id)){
-						coverage.setRFI_GRP_Id(rfi_group_id);
-						coverage.setRFI_NODE_Id(rfi_node_id);
-						coverage.setRFI_CHKL_Id(rfi_checklist_id);
-
-
-							coverage.setRFI_Coverage_var(rfi_coverage_var);
-
-								coverageList.add(coverage);
-									coverageNamesList.add(rfi_coverage_var);
-									System.out.println("table data------222222222----"+rfi_coverage_var);
-
-				//	}
-
-
-
-
-
-
-				}
-
-
-
-
-
-				if(coverageNamesList.size()==0){
-
-
-				if (isCoverageSpinner) {
-					isCoverageSpinner = false;
-					isCoverageTextViewNew = true;
-					System.out.println("In group sequence = 1 block");
-					View change = (View) findViewById(R.id.coverage_id_spinner);
-					ViewGroup parent = (ViewGroup) change.getParent();
-					int index = parent.indexOfChild(change);
-					parent.removeView(change);
-					LayoutInflater inflater = getLayoutInflater();
-					change = inflater.inflate(
-							R.layout.select_question_coverage_textview,
-							parent, false);
-					parent.addView(change, index);
-					coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-					coverageedit.setFilters(new InputFilter[] { filter });
-				} else {
-					if (isCoverageTextViewNew) {
-						coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-						isCoverageSpinner = false;
-					} else {
-						coverageedit = (EditText) findViewById(R.id.coverage_id);
-						isCoverageSpinner = false;
-					}
-				}
-
-
-
-
-
-
-				}else{
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-						android.R.layout.simple_spinner_item, coverageNamesList);
-				adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-				coverageSpinner.setAdapter(adapter);
-
-
-
-				}
-
-
-			} catch (Exception e) {
-				Log.d(TAG, e.toString());
-				e.printStackTrace();
-				flushData();
-				displayDialog("No Record Found",
-						"Sufficient Data is not available.");
-			}
-		}
-	}
-*/
-
     private String blockCharacterSet = "\'";
 
     private InputFilter filter = new InputFilter() {
@@ -3047,338 +1532,6 @@ public class SelectQuestion extends CustomTitle {
             return null;
         }
     };
-
-    public void callGroupService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveGroupData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveGroupData(String data) {
-        if (data.equalsIgnoreCase("No Record Found")) {
-            System.out.println("No Data");
-        } else {
-            try {
-                String[] tabledata = data.split("\\$");
-                groupList = new ArrayList<Group>();
-                JSONArray GroupArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < GroupArray.length(); i++) {
-                    Group group = new Group();
-                    JSONObject stageObject = GroupArray.getJSONObject(i);
-                    String group_id = stageObject.getString("GRP_Id");
-                    group.setGroupID(group_id);
-                    String group_name = stageObject.getString("GRP_Name_var");
-                    group.setGroupName(group_name);
-                    String node_id = stageObject.getString("NDUSER_NODE_Id");
-                    group.setNodeID(node_id);
-                    String checklist_id = stageObject
-                            .getString("NDUSER_CHKL_Id");
-                    group.setCheckListID(checklist_id);
-                    String group_sequence_tint = stageObject
-                            .getString("GRP_Sequence_tint");
-                    group.setGroupSequenceInt(group_sequence_tint);
-                    String column = "Grp_ID,Grp_Name,Node_id,FK_Checklist_ID,user_id,GRP_Sequence_tint";
-                    String values = "'" + group_id + "','" + group_name + "','"
-                            + node_id + "','" + checklist_id + "','"
-                            + db.userId + "','" + group_sequence_tint + "'";
-                    // String values = "'" + group_id + "','" + group_name +
-                    // "','" + node_id + "','" + checklist_id + "','" +
-                    // db.userId + "','" + 3 + "'";
-                    db.insert("Group1", column, values);
-                    groupList.add(group);
-                }
-                grouptspin.setClickable(true);
-                grouptspin.setSelection(0);
-                grouptspin.setVisibility(View.VISIBLE);
-                setGoupSpinnerData(db.selectedChecklistId);
-
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-    public void callQuestionService() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-                responseData = data;
-                System.out.println("success data");
-                saveQuestionData(data);
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
-    }
-
-    public void saveQuestionData(String data) {
-        if (data.equalsIgnoreCase("No Record Found")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-
-                String[] tabledata = data.split("\\$");
-
-                JSONArray questionArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < questionArray.length(); i++) {
-                    JSONObject stageObject = questionArray.getJSONObject(i);
-                    String question_id = stageObject.getString("NDCHKL_QUE_Id");
-                    String question_description = stageObject
-                            .getString("QUE_Description_var");
-                    String question_sequence = stageObject
-                            .getString("QUE_SequenceNo_int");
-                    String question_type = stageObject
-                            .getString("QUE_Type_var");
-                    String node_id = stageObject.getString("NDCHKL_NODE_Id");
-                    String checklist_id = stageObject
-                            .getString("NDCHKL_CHKL_Id");
-                    String group_id = stageObject.getString("NDCHKL_GRP_Id");
-                    String column = "PK_question_id,QUE_Des,QUE_SequenceNo,QUE_Type,NODE_Id,Fk_CHKL_Id,Fk_Grp_ID,user_id";
-                    String values = "'" + question_id + "','"
-                            + question_description + "','" + question_sequence
-                            + "','" + question_type + "','" + node_id + "','"
-                            + checklist_id + "','" + group_id + "','"
-                            + db.userId + "'";
-                    db.insert("question", column, values);
-                }
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
-
-
-    public void saveData(String data) {
-        if (data.equalsIgnoreCase("No Record Found")) {
-            System.out.println("No Data");
-        } else {
-
-            try {
-                String[] tabledata = data.split("\\$");
-
-                JSONArray clientArray = new JSONArray(tabledata[0]);
-                for (int i = 0; i < clientArray.length(); i++) {
-                    JSONObject clientObject = clientArray.getJSONObject(i);
-                    String client_id = clientObject.getString("CL_Id");
-                    String client_name = clientObject.getString("CL_Name_var");
-                    String client_display_name = clientObject
-                            .getString("CL_DisplayName_var");
-                    String client_address = clientObject
-                            .getString("CL_Address_var");
-                    String column = "Client_ID,Clnt_Name,CL_Dispaly_Name,Clnt_Adrs,user_id";
-                    String values = "'" + client_id + "','" + client_name
-                            + "','" + client_display_name + "','"
-                            + client_address + "','" + db.userId + "'";
-                    db.insert("Client", column, values);
-                    System.out.println("Row inserted in Client Table");
-                }
-
-                JSONArray projectArray = new JSONArray(tabledata[1]);
-                for (int i = 0; i < projectArray.length(); i++) {
-                    JSONObject projectObject = projectArray.getJSONObject(i);
-                    String project_id = projectObject.getString("PRJ_Id");
-                    String project_name = projectObject
-                            .getString("PRJ_Name_var");
-                    String project_client_id = projectObject
-                            .getString("PRJ_CL_Id");
-                    String project_display_name = projectObject
-                            .getString("PRJ_DisplayName_var");
-                    String project_address = projectObject
-                            .getString("PRJ_Address_var");
-                    String project_region = projectObject
-                            .getString("PRJ_Region_var");
-                    String project_scrolling_status = projectObject
-                            .getString("PRJ_ScrollingUIStatus_bit");
-                    String column = "PK_Scheme_ID,Scheme_Name,Scheme_Cl_Id,Scheme_Diplay_Name,Scheme_Adrs,Scheme_Region,scrolling_status,user_id";
-                    String values = "'" + project_id + "','" + project_name
-                            + "','" + project_client_id + "','"
-                            + project_display_name + "','" + project_address
-                            + "','" + project_region + "','"
-                            + project_scrolling_status + "','" + db.userId
-                            + "'";
-                    db.insert("Scheme", column, values);
-                    System.out.println("Row inserted in Project Table");
-                }
-                JSONArray workTypeArray = new JSONArray(tabledata[2]);
-                for (int i = 0; i < workTypeArray.length(); i++) {
-                    JSONObject workTypeObject = workTypeArray.getJSONObject(i);
-                    String worktype_id = workTypeObject.getString("WT_Id");
-                    String worktype_name = workTypeObject
-                            .getString("WT_Name_var");
-                    String worktype_level_tint = workTypeObject
-                            .getString("WT_Level_tint");
-                    String worktype_project_id = workTypeObject
-                            .getString("PRJ_Id");
-                    String column = "WorkTyp_ID,WorkTyp_Name,WorkTyp_level,FK_PRJ_Id,user_id";
-                    String values = "'" + worktype_id + "','" + worktype_name
-                            + "','" + worktype_level_tint + "','"
-                            + worktype_project_id + "','" + db.userId + "'";
-                    db.insert("WorkType", column, values);
-                    System.out.println("Row inserted in WorkType Table");
-                }
-
-                /***** AKSHAY *****/
-                /*
-                 * System.out.println("data========="+tabledata.toString());
-                 *
-                 * String column =
-                 * "Client_ID,Clnt_Name,CL_Dispaly_Name,Clnt_Adrs,user_id"
-                 * ;//project saveToDatabase("Client", column,
-                 * tabledata[0],true,4);
-                 */
-
-                /***** AKSHAY *****/
-                /*
-                 * column =
-                 * "PK_Scheme_ID,Scheme_Name,Scheme_Cl_Id,Scheme_Diplay_Name,Scheme_Adrs,Scheme_Region,scrolling_status,user_id"
-                 * ; saveToDatabase("Scheme", column, tabledata[1],true,7);
-                 * System
-                 * .out.println("table 1========"+tabledata[1].toString());
-                 *
-                 * column =
-                 * "WorkTyp_ID,WorkTyp_Name,WorkTyp_level,FK_PRJ_Id,user_id"
-                 * ;//worktype saveToDatabase("WorkType", column,
-                 * tabledata[2],true,4);
-                 *
-                 *
-                 *
-                 * column =
-                 * "Bldg_ID,Bldg_Name,Build_scheme_id,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("Building", column,
-                 * tabledata[3],true,4);
-                 *
-                 *
-                 * column =
-                 * "floor_Id,floor_Name,Floor_Scheme_ID,FK_Bldg_ID,FK_WorkTyp_ID, user_id"
-                 * ;//buildng saveToDatabase("floor", column,
-                 * tabledata[4],true,5);
-                 *
-                 *
-                 *
-                 *
-                 *
-                 * //Unit(Unit_ID TEXT,Unit_Des TEXT,Unit_Scheme_id
-                 * TEXT,Fk_Floor_ID TEXT, user_id TEXT)") column =
-                 * "Unit_ID,Unit_Des,Unit_Scheme_id,Fk_Floor_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("Unit", column,
-                 * tabledata[5],true,5);
-                 *
-                 *
-                 *
-                 * column =
-                 * "Sub_Unit_ID,Sub_Unit_Des,Sub_Unit_Scheme_id,FK_Unit_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("SubUnit", column,
-                 * tabledata[6],true,5);
-                 *
-                 *
-                 * column =
-                 * "Elmt_ID,Elmt_Des,Elmt_Scheme_id,FK_Sub_Unit_ID,FK_WorkTyp_ID, user_id"
-                 * ;//buildng saveToDatabase("Element", column,
-                 * tabledata[7],true,5);
-                 *
-                 *
-                 * column =
-                 * "Sub_Elmt_ID,Sub_Elmt_Des,Sub_Elmt_Scheme_id,FK_Elmt_ID,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("SubElement", column,
-                 * tabledata[8],true,5);
-                 *
-                 *
-                 *
-                 *
-                 *
-                 * column =
-                 * "Checklist_ID,Checklist_Name,Node_Id,FK_WorkTyp_ID,user_id"
-                 * ;//buildng saveToDatabase("CheckList", column,
-                 * tabledata[9],true,4);
-                 *
-                 * column =
-                 * "Grp_ID,Grp_Name,Node_id,FK_Checklist_ID, user_id";//buildng
-                 * saveToDatabase("Group1", column, tabledata[10],true,4);
-                 *
-                 *
-                 *
-                 * column =
-                 * "PK_question_id,QUE_Des,QUE_SequenceNo,QUE_Type, NODE_Id, Fk_CHKL_Id, Fk_Grp_ID,user_id"
-                 * ;//buildng saveToDatabase("question", column,
-                 * tabledata[11],true,7);
-                 */
-
-                /***** AKSHAY *****/
-
-                /***** AKSHAY *****/
-                // Change Made on 24-April-2015
-                /* System.out.println("client data=========="+column.length()); */
-
-                /*
-                 * column = "q_type_id,q_type_text,q_type_desc, user_id";
-                 * saveToDatabase("question_type", column, tabledata[7],true,4);
-                 *
-                 * column =
-                 * "severity_id,mild,moderate,severe,very_severe,exstream, user_id"
-                 * ; saveToDatabase("severity", column, tabledata[8],true,7);
-                 */
-
-                /*
-                 * String tempdata="0~Other"; column =
-                 * "q_heading_id,q_heading_text, user_id";
-                 * saveToDatabase("question_heading", column, tempdata,true,3);
-                 */
-
-                // setSchemeSpinnerData();
-
-                setRFIData();
-                // setClientData();
-            } catch (Exception e) {
-                Log.d(TAG, e.toString());
-                e.printStackTrace();
-                flushData();
-                displayDialog("No Record Found",
-                        "Sufficient Data is not available.");
-            }
-        }
-    }
 
     //changed by sayali
     ////27-02-2024
@@ -3415,19 +1568,6 @@ public class SelectQuestion extends CustomTitle {
         for (int count=0;count<coverageData.length;count++){
             strCoverage+=(count+1)+") "+myCoverageData.get(count)+"\n";
         }
-
-
-      //  myCoverageData.add(0, "Coverage");
-
-
-        viewCoverageImageView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (coverageData.length>0){
-                    displayCoverageDialog("Previous Coverage",strCoverage);
-                }
-            }
-        });
 
 
 
