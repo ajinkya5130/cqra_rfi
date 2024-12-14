@@ -35,12 +35,10 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
-import com.ob.rfi.viewmodels.HomeViewModel;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -64,7 +62,6 @@ public class HomeScreen extends CustomTitle {
     private SharedPreferences checkPreferences;
     private Editor editor;
     private String roll;
-    private HomeViewModel viewModel;
 
     public void onCreate(Bundle savedInstanceState)
     {
@@ -73,12 +70,7 @@ public class HomeScreen extends CustomTitle {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.home);
         // title.setText("CQRA Home");
-        viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-
-        viewModel._lvda.observe(this, s -> {
-            Log.d(TAG, "onCreate: s: "+s);
-        });
 
 
         String contentMsg = getIntent().getStringExtra("key");

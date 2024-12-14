@@ -22,8 +22,6 @@ import com.ob.database.RFIRoomDb;
 
 public class CustomTitle extends AppCompatActivity {
 
-	
- 
 	public static boolean network_available = true;
 	//private static final RoomDbObject roomDbObject = RoomDbObject.INSTANCE;
 	public static RFIRoomDb rfiDB = null;
@@ -36,8 +34,6 @@ public class CustomTitle extends AppCompatActivity {
 		rfiDB = RFIRoomDb.Companion.getDatabase(this);
 		//request custom title bar
 		/*requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-		 
-		
 	//	getWindow().setBackgroundDrawable(getResources().getDrawable(R.drawable.bg));
 		
 		setContentView(R.layout.background);
@@ -131,7 +127,16 @@ public class CustomTitle extends AppCompatActivity {
 	};
 	private SharedPreferences checkPreferences;
 	private Editor editor;
-	 
+
+	protected void showProgressDialog(String message) {
+		//mProgressDialog = new GlobalProgressDialogFragment();
+		GlobalProgressDialogFragment.Companion.setProgressMessage(message);
+		GlobalProgressDialogFragment.Companion.showDialog(getSupportFragmentManager());
+		//mProgressDialog.show(getSupportFragmentManager(), "globalProgressDialog");
+	}
+	protected void hideProgressDialog() {
+		GlobalProgressDialogFragment.Companion.hideDialog(getSupportFragmentManager());
+	}
 	
 	@Override
 	protected void onResume() {

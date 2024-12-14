@@ -1,5 +1,10 @@
 package com.ob.rfi;
 
+import static com.ob.rfi.viewmodels.LoginSealedClass.Failure;
+import static com.ob.rfi.viewmodels.LoginSealedClass.Loading;
+import static com.ob.rfi.viewmodels.LoginSealedClass.Message;
+import static com.ob.rfi.viewmodels.LoginSealedClass.Success;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,6 +17,7 @@ import android.database.Cursor;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Process;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.util.Log;
@@ -26,6 +32,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -33,6 +40,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
+import com.ob.rfi.viewmodels.LoginSealedClass;
+import com.ob.rfi.viewmodels.LoginViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -61,7 +70,8 @@ public class LoginScreen extends CustomTitle {
 	private Context mContext;
 	private Activity mActivity;
 	private static final int MY_PERMISSIONS_REQUEST_CODE = 123;
-
+	private LoginViewModel viewModel;
+	private static final String TAG = "LoginScreen";
 
 	/** Called when the activity is first created. */
 	@Override
@@ -71,7 +81,7 @@ public class LoginScreen extends CustomTitle {
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.loginscreen);
 		//FirebaseTokenGenerate.INSTANCE.getToken();
-
+		viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 		mContext = getApplicationContext();
 		mActivity = LoginScreen.this;
 		checkPermission();
@@ -116,7 +126,7 @@ public class LoginScreen extends CustomTitle {
 //		// android_ID = "358049044737968";
 
 		db = new RfiDatabase(this);
-		getFirebasetoken();
+		//getFirebasetoken();
 		Button loginButton = (Button) findViewById(R.id.LoginButton);
 		loginButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -125,9 +135,9 @@ public class LoginScreen extends CustomTitle {
 				 */
 				usernameText = usernameEditText.getText().toString().trim();
 				passwordText = passwordEditText.getText().toString().trim();
+
 				if (validateUser()) {
 					authenticateUser();
-
 				}
 
 			//	throw new RuntimeException("Rfi Test Crash");
@@ -144,7 +154,43 @@ public class LoginScreen extends CustomTitle {
 			}
 		});
 		setDeafaultUser();
+
+		handleFlowData();
 	}
+
+	private void handleFlowData() {
+		viewModel.getFlowModel().observe(this, loginSealedClass -> {
+			if (loginSealedClass instanceof Success<?>){
+				Log.d(TAG, "Success handleFlowData: "+loginSealedClass);
+				hideProgressDialog();
+				finish();
+				Intent i =new Intent(LoginScreen.this , HomeScreen.class);
+				i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+				startActivity(i);
+			}
+			if (loginSealedClass instanceof Failure<?>){
+				hideProgressDialog();
+				displayDialog("Error", "Problem in connection.");
+				Log.d(TAG, "Failure handleFlowData: "+loginSealedClass);
+			}
+			if (loginSealedClass instanceof LoginSealedClass.Loading){
+				boolean isLoading = ((Loading) loginSealedClass).isLoading();
+				if (isLoading){
+					showProgressDialog(((Loading) loginSealedClass).getMessage());
+				}else {
+					hideProgressDialog();
+				}
+				Log.d(TAG, "Loading handleFlowData: "+loginSealedClass);
+			}
+			if (loginSealedClass instanceof LoginSealedClass.Message){
+				String me = ((Message) loginSealedClass).getMessage();
+				hideProgressDialog();
+				displayDialog("Error", "Problem in connection.\n Error Message: "+me);
+				Log.d(TAG, "Message handleFlowData: "+me);
+			}
+        });
+	}
+
 
 	private void getFirebasetoken() {
 
@@ -186,6 +232,7 @@ public class LoginScreen extends CustomTitle {
 		savePref();
 		boolean isRecordFound = false;
 		if (network_available) {
+			viewModel.showProgress();
 			method = "verifyLogin";
 			//method = "getDetails";
 			param = new String[] { "username", "password","deviceToken"};
@@ -295,7 +342,7 @@ public class LoginScreen extends CustomTitle {
 		alertDialog.setButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				finish();
-				android.os.Process.killProcess(android.os.Process.myPid());
+				Process.killProcess(Process.myPid());
 			}
 		});
 		alertDialog.setButton2("Cancel", new DialogInterface.OnClickListener() {
@@ -361,10 +408,11 @@ public class LoginScreen extends CustomTitle {
 				db.justLogged = true;
 
 				db.closeDb();
-				finish();
+				viewModel.getSignInApi();
+				/*finish();
 				Intent i =new Intent(LoginScreen.this , HomeScreen.class);
 				i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-				startActivity(i);
+				startActivity(i);*/
 			}
 
 		} else {
@@ -456,10 +504,12 @@ public class LoginScreen extends CustomTitle {
 			}
 			@Override
 			public void dataDownloadFailed() {
+				viewModel.hideProgress();
 				displayDialog("Error", "Problem in connection.");
 			}
 			@Override
 			public void netNotAvailable() {
+				viewModel.hideProgress();
 				displayDialog("Error", "No network connection.");
 			}
 		});

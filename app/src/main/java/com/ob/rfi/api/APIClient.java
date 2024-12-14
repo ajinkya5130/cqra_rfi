@@ -1,5 +1,7 @@
 package com.ob.rfi.api;
 
+import java.util.concurrent.TimeUnit;
+
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -13,7 +15,12 @@ public class APIClient {
 
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new ErrorInterceptor())
+                .callTimeout(10000, TimeUnit.SECONDS)
+                .connectTimeout(10000, TimeUnit.SECONDS)
+                .readTimeout(10000, TimeUnit.SECONDS)
+                .addInterceptor(interceptor).build();
 
 
         if (retrofit == null) {

@@ -171,7 +171,7 @@ public class Webservice extends AsyncTask<String, Integer, String> {
 		} else {
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 		}
-		progressDialog.show();
+		//progressDialog.show();
 	}
 
 	synchronized public void setdownloadListener(
