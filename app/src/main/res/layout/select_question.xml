@@ -269,7 +269,7 @@
                     android:gravity="center_vertical"
                     android:text="Unit"
                     android:textColor="#FFFFFF"
-                    android:textStyle="bold"></TextView>
+                    android:textStyle="bold"/>
 
                 <Spinner
                     android:id="@+id/rfi_unit_id"
@@ -278,15 +278,7 @@
                     android:layout_gravity="center"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
-                    android:layout_weight="2"></Spinner>
-
-                <com.multispinner.MultiSelectSpinner
-                    android:id="@+id/rfi_unit_id_multi"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:layout_weight="2"
-                    android:visibility="gone" />
+                    android:layout_weight="2"/>
 
 
             </LinearLayout>
@@ -305,24 +297,17 @@
                     android:gravity="center_vertical"
                     android:text="Sub-Unit"
                     android:textColor="#FFFFFF"
-                    android:textStyle="bold"></TextView>
+                    android:textStyle="bold"/>
 
-                <Spinner
+                <TextView
                     android:id="@+id/rfi_sub_unit_id"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
-                    android:layout_weight="2"></Spinner>
-
-                <com.multispinner.MultiSelectSpinner
-                    android:id="@+id/rfi_sub_unit_id_multi"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:layout_weight="2"
-                    android:visibility="gone" />
+                    android:text="Select Sub-Unit"
+                    android:layout_weight="2"/>
             </LinearLayout>
 
 
@@ -342,7 +327,7 @@
                     android:gravity="center_vertical"
                     android:text="Previous Coverage"
                     android:textColor="#FFFFFF"
-                    android:textStyle="bold"></TextView>
+                    android:textStyle="bold"/>
 
 
                 <Spinner
@@ -352,7 +337,7 @@
                     android:layout_gravity="center"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
-                    android:layout_weight="2"></Spinner>
+                    android:layout_weight="2"/>
 
             </LinearLayout>
 
@@ -383,6 +368,7 @@
                     android:layout_weight="2"
                     android:imeOptions="actionNext"
                     android:lines="1"
+                    android:text=""
                     android:enabled="false"
                     android:focusable="false"
                     android:nextFocusDown="@+id/drawing_id"
@@ -423,11 +409,54 @@
                     android:layout_weight="2"
                     android:imeOptions="actionDone"
                     android:lines="1"
+                    android:text=""
                     android:singleLine="true"
-                    android:textColor="@color/Blue"></EditText>
+                    android:textColor="@color/Blue"/>
 
 
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="7"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_marginLeft="20dp"
+                    android:layout_weight="4"
+                    android:gravity="center_vertical"
+                    android:text="Status"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/rgStatus"
+                    android:layout_weight="2"
+                    android:layout_width="fill_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp">
+                   <RadioButton
+                       android:id="@+id/rbPartially"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:text="Partial RFI"
+                       android:textColor="@color/White"
+                       />
+                   <RadioButton
+                       android:id="@+id/rbFullRfi"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:text="Full RFI"
+                       android:textColor="@color/White"
+                       />
+                </RadioGroup>
+
+            </LinearLayout>
+
 
 
             <LinearLayout
@@ -444,7 +473,7 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:text="Ok"></Button>
+                    android:text="Ok"/>
 
                 <Button
                     android:id="@+id/question_select_Back"
@@ -452,7 +481,7 @@
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:text="Back"></Button>
+                    android:text="Back"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

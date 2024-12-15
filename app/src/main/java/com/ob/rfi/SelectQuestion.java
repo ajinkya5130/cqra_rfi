@@ -20,7 +20,11 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProvider;
 
@@ -35,8 +39,6 @@ import com.ob.database.db_tables.SubUnitAllocateTaskModel;
 import com.ob.database.db_tables.UnitAllocateTaskModel;
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel;
 import com.ob.rfi.db.RfiDatabase;
-import com.ob.rfi.service.Webservice;
-import com.ob.rfi.service.Webservice.downloadListener;
 import com.ob.select_questions.viewmodels.SelectQuestionViewModel;
 
 import java.util.ArrayList;
@@ -47,65 +49,23 @@ import java.util.Objects;
 @SuppressWarnings("static-access")
 public class SelectQuestion extends CustomTitle {
 
-    private Spinner schemeSpin;
-    private Spinner buildingSpin;
     private Spinner checklistspin;
-    private Spinner subgrpSpin;
-    private Spinner tradeSpin;
-    private Spinner floorSpin;
-    private Spinner supervisorspin;
-    private Spinner foremanspin;
-    private Spinner contractorspin;
     public static CustomTitle slectionclass;
     private Integer[] schemId;
-    private String[] tradeId;
-    private String[] chklstId;
-    private String[] bldgId;
-    private String[] subgrpId;
-    private String[] supervisorId;
-    private String[] supervisor;
-    private String[] foremanId;
-    private String[] foreman;
-    private String[] contractorId;
-    private String[] contractorNewId;
-    private String[] contractorId1;
-    private String[] Citems4;
-    private String[] contractor;
-    private String[] contid;
     private Button okBtn;
     private Button backBtn;
     private String errorMessage;
     private RfiDatabase db;
-    private String selected = "";
-    private Spinner clientspin;
     private String[] clientName;
     private Integer[] clientId;
-    private Spinner rfiSpin;
     private Spinner projSpin;
     private Spinner clintSpin;
     private Spinner structureSpin;
     private Spinner stageSpin;
     private Spinner unitSpin;
-    private Spinner subunitspin;
-    private Spinner elementspin;
-    private Spinner subelementspin;
+    private TextView subunitspin;
 
     private Spinner grouptspin;
-    //CHANGED BY SAYALI
-    private Spinner coveragespin;
-    private Spinner coverageSpinner;
-    private String method;
-    private String[] param;
-    private String[] value;
-    private String[] unitId;
-    private String[] subunitId;
-    private String[] elementId;
-    private String[] subelementId;
-    private String[] checklistId;
-    private String[] groupId;
-    private String[] NodeId;
-    private String[] floorid;
-    private String[] RfiId;
 
     private EditText coverageedit;
     private Spinner worktypeSpin;
@@ -118,25 +78,13 @@ public class SelectQuestion extends CustomTitle {
     public static CustomTitle destruct;
     public static final String TAG = "SelectScreen";
     public static boolean insertFlag = false;
-    private String responseData;
-    /***** AKSHAY *****/
-    ArrayList<Group> groupList;
-    private boolean isCoverageSpinner = false;
-    private boolean isCoverageTextViewNew = false;
-
-    private MultiSelectSpinner unitSpinMulti;
-    private MultiSelectSpinner subUnitSpinMulti;
-    private MultiSelectSpinner elementSpinMulti;
-    private MultiSelectSpinner subElementSpinMulti;
-    private MultiSelectSpinner groupSpinMulti;
-
-    boolean isUnit = false;
-    boolean isSubUnit = false;
-    boolean isElement = false;
-    boolean isSubElement = false;
     boolean isGroup = false;
     private boolean isGroupDataAvailable = false;
     private SelectQuestionViewModel viewModel;
+    private String statusValue = "";
+    private String cov;
+    private SharedPreferences checkPreferences;
+    private Editor editor;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -156,27 +104,33 @@ public class SelectQuestion extends CustomTitle {
         structureSpin = (Spinner) findViewById(R.id.rfi_structure_id);
         stageSpin = (Spinner) findViewById(R.id.rfi_statge_id);
         unitSpin = (Spinner) findViewById(R.id.rfi_unit_id);
-        subunitspin = (Spinner) findViewById(R.id.rfi_sub_unit_id);
-        elementspin = (Spinner) findViewById(R.id.rfi_element_id);
-        subelementspin = (Spinner) findViewById(R.id.rfi_sub_element_id);
+        subunitspin = findViewById(R.id.rfi_sub_unit_id);
         checklistspin = (Spinner) findViewById(R.id.rfi_checklist_id);
         grouptspin = (Spinner) findViewById(R.id.rfi_group_id);
-
-        //changed by sayali
-        coveragespin = (Spinner) findViewById(R.id.Coverage_spin_id);
 
         coverageedit = (EditText) findViewById(R.id.coverage_id);
 
         drawingeedit = (EditText) findViewById(R.id.drawing_id);
+        RadioGroup rgStatus = findViewById(R.id.rgStatus);
+        checkPreferences = getSharedPreferences("RFI_File",
+                MODE_PRIVATE);
+        editor = checkPreferences.edit();
 
-        unitSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_unit_id_multi);
+        rgStatus.setOnCheckedChangeListener((group, checkedId) -> {
+            int selectedId = group.getCheckedRadioButtonId();
 
-        subUnitSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_sub_unit_id_multi);
-        elementSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_element_id_multi);
-        subElementSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_sub_element_id_multi);
-        groupSpinMulti = (MultiSelectSpinner) findViewById(R.id.rfi_group_id_multi);
+            // Find the radio button by the selected ID
+            RadioButton selectedRadioButton = findViewById(selectedId);
 
-
+            if (selectedRadioButton != null) {
+                // Get the text of the selected radio button
+                statusValue = selectedRadioButton.getText().toString();
+                //Toast.makeText(this, "Selected: " + selectedText, Toast.LENGTH_SHORT).show();
+            } else {
+                statusValue = "";
+                Toast.makeText(this, "No option selected", Toast.LENGTH_SHORT).show();
+            }
+        });
 
 
        /* int a=0;
@@ -201,6 +155,7 @@ public class SelectQuestion extends CustomTitle {
 
         ResetId();
         setupLiveData();
+        viewModel.getCreatedRFI();
 
         okBtn = (Button) findViewById(R.id.question_select_submit);
         backBtn = (Button) findViewById(R.id.question_select_Back);
@@ -209,160 +164,29 @@ public class SelectQuestion extends CustomTitle {
 
         okBtn.setOnClickListener(new OnClickListener() {
             private SharedPreferences checkPreferences;
-            private Editor editor;
 
             @Override
             public void onClick(View arg0) {
 
-                String where = "user_id='" + db.userId + "'";
-                Cursor cursor = db.select("Created_RFI", "FK_rfi_Id", where, null,
-                        null, null, null);
-
-                String id = "";
-                if (cursor.moveToFirst()) {
-                    do {
-                        id = cursor.getString(0);
-                    } while (cursor.moveToNext());
-                } else {
-                    id = "0";
-                }
-
-                nval = Integer.parseInt(id);
-                nval = nval + 1;
-
-                String value = String.valueOf(nval);
-                String cov;
-                if (isCoverageSpinner) {
-                    if (coverageSpinner.getSelectedItem() != null)
-                        cov = coverageSpinner.getSelectedItem().toString();
-                    else
-                        cov = "";
-                } else {
-                    cov = coverageedit.getText().toString();
-                }
-
-                cov = cov.replace("\'", "");
-
-                db.insert("Created_RFI", "FK_rfi_Id,user_id,coverageText", "'" + value + "','" + db.userId + "','" + cov + "'");
-                System.out.println("Data Inserted in Rfi_New_Create Table : RFI_ID : " + value);
-
-                db.selectedrfiId = value;
-
-                if (validateScreen()) {
+                cov = coverageedit.getText().toString();
+                if (cov.isEmpty()) {
+                    displayErrorDialog("Error", "Please Enter Coverage.");
+                    return;
+                }else if (viewModel.isCoveragePresent(cov)){
+                    displayErrorDialog("Error", "Coverage already present.");
+                    return;
+                }else if (validateScreen()) {
                     displayErrorDialog("Error", errorMessage);
-
-                    // setalertdata();
-
-                    /*
-                     * RfiDatabase.gropPosition = 0; RfiDatabase.childPosition =
-                     * 0;
-                     */
-                } else if (!isGroupDataAvailable) {
+                    return;
+                }else if (!isGroupDataAvailable) {
                     displayErrorDialog("Error", "Please select group");
-
-                } else if (isQuestionAvailable()) {
-
-                    if (db.selectedScrollStatus.equalsIgnoreCase("true")) {
-                        Intent int1 = new Intent(SelectQuestion.this,
-                                RfiQuestionSelect.class);
-                        if (isCoverageSpinner) {
-                            int1.putExtra("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                        } else {
-                            int1.putExtra("coverage", coverageedit.getText()
-                                    .toString());
-                        }
-                        int1.putExtra("drawingId", drawingeedit.getText()
-                                .toString());
-
-                        checkPreferences = getSharedPreferences("RFI_File",
-                                MODE_PRIVATE);
-                        editor = checkPreferences.edit();
-                        if (isCoverageSpinner) {
-                            editor.putString("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                            int1.putExtra("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                        } else {
-                            editor.putString("coverage", coverageedit.getText()
-                                    .toString());
-                            int1.putExtra("coverage", coverageedit.getText()
-                                    .toString());
-                        }
-                        editor.putString("drawing", drawingeedit.getText()
-                                .toString());
-                        editor.commit();
-
-                        startActivity(int1);
-
-                    } else {
-                        Intent int1 = new Intent(SelectQuestion.this,
-                                RfiQuestionSelect.class);
-                        if (isCoverageSpinner) {
-                            int1.putExtra("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                        } else {
-                            int1.putExtra("coverage", coverageedit.getText()
-                                    .toString());
-                        }
-                        int1.putExtra("drawingId", drawingeedit.getText()
-                                .toString());
-
-                        checkPreferences = getSharedPreferences("RFI_File",
-                                MODE_PRIVATE);
-                        editor = checkPreferences.edit();
-                        if (isCoverageSpinner) {
-                            editor.putString("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                            int1.putExtra("coverage", coverageSpinner
-                                    .getSelectedItem().toString());
-                        } else {
-                            editor.putString("coverage", coverageedit.getText()
-                                    .toString());
-                            int1.putExtra("coverage", coverageedit.getText()
-                                    .toString());
-                        }
-                        editor.putString("drawing", drawingeedit.getText()
-                                .toString());
-                        editor.commit();
-
-                        startActivity(int1);
-
-                        /*
-                         * Intent int1=new
-                         * Intent(SelectQuestion.this,RfiQuestionire.class);
-                         * int1
-                         * .putExtra("coverage",coverageedit.getText().toString
-                         * ()); startActivity(int1);
-                         */
-                    }
-                    /*
-                     * Intent int1=new
-                     * Intent(SelectQuestion.this,RfiQuestionire.class);
-                     * int1.putExtra
-                     * ("coverage",coverageedit.getText().toString());
-                     */
-                    /*
-                     * Intent int1=new
-                     * Intent(SelectQuestion.this,RfiQuestionSelect.class);
-                     * int1.
-                     * putExtra("coverage",coverageedit.getText().toString());
-                     * int1
-                     * .putExtra("drawingId",drawingeedit.getText().toString());
-                     *
-                     *
-                     * checkPreferences=getSharedPreferences("RFI_File",MODE_PRIVATE
-                     * ); editor=checkPreferences.edit();
-                     * editor.putString("coverage"
-                     * ,coverageedit.getText().toString());
-                     * editor.putString("drawing"
-                     * ,drawingeedit.getText().toString()); editor.commit();
-                     *
-                     * startActivity(int1);
-                     */
-                } else {
-                    displayErrorDialog("", "Please Select Another Combination!");
+                    return;
+                }else if (statusValue.isEmpty()) {
+                    displayErrorDialog("Error", "Please select Status");
+                    return;
                 }
+
+                viewModel.checkIsQuestionAvailable();
             }
 
         });
@@ -387,9 +211,9 @@ public class SelectQuestion extends CustomTitle {
             //if (isDataAvialable("Client") && isDataAvialableAllocateTask("AllocateTask")) {
 
             viewModel.getClientAllocateDataFromDB();
-                //setClientData();
-                clintSpin.setClickable(true);
-                clintSpin.setSelection(1);// changed pramod
+            //setClientData();
+            clintSpin.setClickable(true);
+            clintSpin.setSelection(1);// changed pramod
             //}
         }
 
@@ -397,116 +221,129 @@ public class SelectQuestion extends CustomTitle {
 
     private void setupLiveData() {
         Objects.requireNonNull(viewModel.getLvClientAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvClientAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvClientAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setClientData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvSchemaAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvSchemaAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvSchemaAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setSchemeSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvWorkTypeAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvWorkTypeAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvWorkTypeAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setWorkTypeSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvBuildingAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvBuildingAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvBuildingAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setBuildingSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvFloorAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvFloorAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvFloorAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setFloorSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvUnitAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvUnitAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvUnitAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setUnitSpinnerData();
-                    }else {
+                    } else {
                         viewModel.getCheckListAllocateDataFromDB();
                         unitSpin.setVisibility(View.GONE);
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvSubUnitAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvSubUnitAllocateData: value: "+value);
+                this, value -> {
+                    Log.d(TAG, "getLvSubUnitAllocateData: value: " + value);
 
-                    if (value!=0){
+                    if (value != 0) {
                         setSubUnitSpinnerData();
-                    }else {
+                    } else {
                         viewModel.getCheckListAllocateDataFromDB();
-                        subunitspin.setVisibility(View.GONE);
+                       // subunitspin.setVisibility(View.GONE);
                         //displayErrorDialog("Error","No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvCheckListAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvCheckListAllocateData: value: "+value);
-                    if (value!=0){
+                this, value -> {
+                    Log.d(TAG, "getLvCheckListAllocateData: value: " + value);
+                    if (value != 0) {
                         setCheckListSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
         Objects.requireNonNull(viewModel.getLvGroupListAllocateData()).observe(
-                this, value ->{
-                    Log.d(TAG, "getLvGroupListAllocateData: value: "+value);
-                    if (value!=0){
+                this, value -> {
+                    Log.d(TAG, "getLvGroupListAllocateData: value: " + value);
+                    if (value != 0) {
                         setGroupSpinnerData();
-                    }else {
-                        displayErrorDialog("Error","No Data");
+                    } else {
+                        displayErrorDialog("Error", "No Data");
+                    }
+                }
+        );
+        Objects.requireNonNull(viewModel.getLvQuestionsData()).observe(
+                this, value -> {
+                    Log.d(TAG, "getLvGroupListAllocateData: value: " + value);
+                    if (value != 0) {
+                        viewModel.insertCreatedRFI(cov);
+                        Intent int1 = new Intent(SelectQuestion.this,
+                                RfiQuestionSelect.class);
+                        int1.putExtra("coverage", cov);
+                        int1.putExtra("drawingId", drawingeedit.getText()
+                                .toString());
+                        int1.putExtra("coverage", cov);
+
+                        editor.putString("coverage", cov);
+                        editor.putString("drawing", drawingeedit.getText()
+                                .toString());
+                        editor.commit();
+
+                        startActivity(int1);
+                    } else {
+                        displayErrorDialog("Error", "Please Select Another Combination!");
                     }
                 }
         );
 
-    }
-
-    //changed by sayali
-    //27-02-2024
-    public void coverageData() {
-        method = "getCoverageForCRFI";
-        param = new String[]{"projectId", "workTypeId", "nodeId", "checkListId", "group_Id"};
-        value = new String[]{db.selectedSchemeId, db.selectedWorkTypeId, db.selectedNodeId, db.selectedChecklistId,
-                db.selectedGroupId};
-        callService1();
     }
 
     @Override
@@ -520,16 +357,12 @@ public class SelectQuestion extends CustomTitle {
 
     public void setSpiner() {
         if (db.setSpinner) {
-
-            rfiSpin.setSelection(0);
             clintSpin.setSelection(0);
             projSpin.setSelection(0);
             structureSpin.setSelection(0);
             stageSpin.setSelection(0);
             unitSpin.setSelection(0);
-            subunitspin.setSelection(0);
-            elementspin.setSelection(0);
-            subelementspin.setSelection(0);
+            subunitspin.setText("");
             checklistspin.setSelection(0);
             grouptspin.setSelection(0);
             db.setSpinner = false;
@@ -559,77 +392,12 @@ public class SelectQuestion extends CustomTitle {
 
     protected boolean validateScreen() {
         boolean validate = true;
-        System.out.println("In validate method");
-        System.out.println("Value os isCoverageSpinner : " + isCoverageSpinner);
-        if (isCoverageSpinner) {
-            if (noRfi == 1) {
-                errorMessage = "No Coverage available Please select another combination.";
-                return true;
-            } else {
-                if (coverageSpinner.getSelectedItem() != null) {
-                    String coverage_check = coverageSpinner.getSelectedItem().toString();
-                    Cursor cursorCheck = db.select("Created_RFI", "coverageText", "coverageText = '" + coverage_check + "'", null, null, null, null);
-                    System.out.println("Cursor Count : " + cursorCheck.getCount());
-                    db.questionCount = String.valueOf(cursorCheck.getCount());
-				/* if(cursorCheck.getCount() > 1) {
-					errorMessage = "This Coverage Already Exists";
-					return true;
-				} else {
-					validate = false;
-				}  */
-                } else {
-                    errorMessage = "No Coverage available Please select another combination.";
-                    return true;
-                }
-
-            }
-        } else {
-            System.out.println("Coverage Text : "
-                    + coverageedit.getText().toString());
-            if (coverageedit.getText().toString().equalsIgnoreCase("")) {
-                errorMessage = "Please Enter Coverage.";
-                return true;
-            } else {
-                int count = 0;
-                String coverage_check = coverageedit.getText().toString();
-                Cursor cursorCheck = db.select("Created_RFI", "coverageText", null, null, null, null, null);
-                if (cursorCheck.moveToFirst()) {
-                    do {
-                        if (cursorCheck.getString(0).equalsIgnoreCase(coverage_check)) {
-                            count++;
-                        }
-                    } while (cursorCheck.moveToNext());
-
-                    if (count > 1) {
-                        errorMessage = "This Coverage Already Exists";
-                        // return true;
-                        return false;
-                        //This return statement changed by Balaji after discussion with pramod and sandeep, 4 Sept 2021
-                    }
-                } else {
-                    validate = false;
-                }
-            }
-        }
         if (drawingeedit.getText().toString().equalsIgnoreCase("")) {
             errorMessage = "Please Enter Drawing No.";
             return true;
         } else {
             validate = false;
         }
-
-        /*
-         * else if ((!db.supervisor_flag) && db.foreman_flag) { errorMessage =
-         * "Please Select Supervisor or Allocate Foreman"; }
-         */
-        /*
-         * db.contr= false; db.supervisor_flag= false; db.foreman_flag= false;
-         * db.contractor_flag= false;
-         */// System.out.println("schem="+db.selectedSchemeId);
-        // System.out.println("building="+db.selectedBuildingId);
-        // System.out.println("checklist="+db.selectedChecklistId);
-        // System.out.println("subroup="+db.selectedGroupId);
-
         return validate;
     }
 
@@ -645,59 +413,6 @@ public class SelectQuestion extends CustomTitle {
             }
         });
         alertDialog.show();
-    }
-
-    // ------------------------------------------------------------------------------
-
-    private void setRFIData() {
-
-        // Rfi_New_Create(FK_rfi_Id TEXT,user_id TEXT)"
-
-        String where = "user_id='" + db.userId + "'";
-        Cursor cursor = db.select("Rfi_New_Create", "FK_rfi_Id", where, null,
-                null, null, null);
-
-        String id = "";
-        if (cursor.moveToFirst()) {
-
-            do {
-
-                id = cursor.getString(0);
-            } while (cursor.moveToNext());
-        } else {
-            id = "0";
-        }
-
-        nval = Integer.parseInt(id);
-        nval = nval + 1;
-
-        String value = String.valueOf(nval);
-        final String[] items = new String[2];
-        items[0] = "--select--";
-        items[1] = "create new" + value;
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, items);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        rfiSpin.setAdapter(adapter);
-        rfiSpin.setSelection(1);
-        rfiSpin.setClickable(false);
-        rfiSpin.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-            public void onItemSelected(AdapterView<?> aview, View view,
-                                       int position, long rowid) {
-                if (position > 0) {
-                    setClientData();
-                    db.selectedrfiId = items[1];
-
-                } else {
-                    System.out.println("hello");
-                }
-            }
-
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
     }
 
     // /---client
@@ -741,7 +456,7 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         clientId = new Integer[size];
         clientName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             clientName[i] = list.get(i).getClientName();
             clientId[i] = list.get(i).getClientId();
         }
@@ -810,7 +525,7 @@ public class SelectQuestion extends CustomTitle {
         schemId = new Integer[size];
         final String[] scrolling_status = new String[size];
         String[] schemeName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             ProjectAllocateTaskModel model = list.get(i);
             schemeName[i] = model.getSchemaOrProjectName();
             schemId[i] = model.getSchemaOrProjectId();
@@ -863,7 +578,7 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] workTypeID = new Integer[size];
         String[] workTypeName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             WorkTypeAllocateTaskModel model = list.get(i);
             workTypeName[i] = model.getWorkTypeName();
             workTypeID[i] = model.getWorkTypeId();
@@ -896,8 +611,7 @@ public class SelectQuestion extends CustomTitle {
                     System.out.println("SelectedSchemeID : "
                             + db.selectedSchemeId);
 
-                }
-                else {
+                } else {
                     db.selectedWorkTypeId = "";
                     db.selectedBuildingId = "";
                     db.selectedChecklistId = "";
@@ -922,9 +636,9 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] buildingID = new Integer[size];
         String[] buildingName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             BuildingAllocateTaskModel model = list.get(i);
-            buildingName[i] =model.getBuildingName();
+            buildingName[i] = model.getBuildingName();
             buildingID[i] = model.getBuildingId();
         }
 
@@ -950,12 +664,7 @@ public class SelectQuestion extends CustomTitle {
                     stageSpin.setSelection(0);
                     unitSpin.setClickable(false);
                     unitSpin.setSelection(0);
-                    subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
-                    elementspin.setClickable(false);
-                    elementspin.setSelection(0);
-                    subelementspin.setClickable(false);
-                    subelementspin.setSelection(0);
+                    subunitspin.setText("");
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
 
@@ -982,7 +691,7 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] floorID = new Integer[size];
         String[] floorName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             FloorAllocateTaskModel model = list.get(i);
             floorName[i] = model.getFloorName();
             floorID[i] = model.getFloorId();
@@ -1016,12 +725,7 @@ public class SelectQuestion extends CustomTitle {
                 } else {
                     unitSpin.setClickable(false);
                     unitSpin.setSelection(0);
-                    subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
-                    elementspin.setClickable(false);
-                    elementspin.setSelection(0);
-                    subelementspin.setClickable(false);
-                    subelementspin.setSelection(0);
+                    subunitspin.setText("");
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
 
@@ -1047,12 +751,12 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] unitID = new Integer[size];
         String[] unitName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             UnitAllocateTaskModel model = list.get(i);
             unitName[i] = model.getUnitName();
             unitID[i] = model.getUnitId();
         }
-        if (size == 0){
+        if (size == 0) {
             checklistspin.setClickable(true);
             checklistspin.setSelection(0);
         }
@@ -1070,14 +774,10 @@ public class SelectQuestion extends CustomTitle {
                 if (position > 0) {
                     db.selectedUnitId = unitID[position].toString();
                     db.selectedNodeId = unitID[position].toString();
+                    coverageedit.setText(unitName[position]);
                     viewModel.getSubUnitAllocateDataFromDB();
                 } else {
-                    subunitspin.setClickable(false);
-                    subunitspin.setSelection(0);
-                    elementspin.setClickable(false);
-                    elementspin.setSelection(0);
-                    subelementspin.setClickable(false);
-                    subelementspin.setSelection(0);
+                    subunitspin.setText("");
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
 
@@ -1141,23 +841,78 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] subUnitID = new Integer[size];
         String[] subUnitName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             SubUnitAllocateTaskModel model = list.get(i);
             subUnitName[i] = model.getSubUnitName();
             subUnitID[i] = model.getSubUnitId();
         }
-        if (size == 0){
+        if (size == 0) {
             checklistspin.setClickable(true);
             checklistspin.setSelection(0);
         }
+        final boolean[] checkedItems = new boolean[size];
+        final List<String> selectedItems = Arrays.asList(subUnitName);
+        subunitspin.setOnClickListener(view -> {
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, subUnitName);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        subunitspin.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
+            // initialise the alert dialog builder
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustom);
 
-        subunitspin.setOnItemSelectedListener(new OnItemSelectedListener() {
+            // set the title for the alert dialog
+            builder.setTitle("Select Sub Unit");
+
+            // now this is the function which sets the alert dialog for multiple item selection ready
+            builder.setMultiChoiceItems(subUnitName, checkedItems, (dialog, which, isChecked) -> {
+                checkedItems[which] = isChecked;
+                //String currentItem = selectedItems.get(which);
+            });
+
+            // alert dialog shouldn't be cancellable
+            builder.setCancelable(false);
+
+            // handle the positive button of the dialog
+            builder.setPositiveButton("Done", (dialog, which) -> {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int i = 0; i < checkedItems.length; i++) {
+                    if (checkedItems[i]) {
+                        Log.d(TAG, "setSubUnitSpinnerData: " + (selectedItems.get(i)));
+                        stringBuilder.append(selectedItems.get(i));
+                        stringBuilder.append(", ");
+                    }
+                }
+                if (checkedItems.length > 0) {
+                    Log.d(TAG, "b4 setSubUnitSpinnerData: stringBuilder: " + stringBuilder);
+                    if (!stringBuilder.toString().isEmpty()) {
+                        stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+                        Log.d(TAG, "after setSubUnitSpinnerData: stringBuilder: " + stringBuilder);
+                        subunitspin.setText(stringBuilder.toString());
+                        coverageedit.setText(stringBuilder.toString());
+                    } else {
+                        subunitspin.setText("Select Sub Unit");
+                    }
+
+                } else {
+                    subunitspin.setText("Select Sub Unit");
+                }
+            });
+
+            // handle the negative button of the alert dialog
+            builder.setNegativeButton("CANCEL", (dialog, which) -> {
+            });
+
+            // handle the neutral button of the dialog to clear the selected items boolean checkedItem
+            builder.setNeutralButton("CLEAR ALL", (dialog, which) -> {
+                Arrays.fill(checkedItems, false);
+                subunitspin.setText("Select Sub Unit");
+            });
+
+            // create the builder
+            builder.create();
+
+            // create the alert dialog with the alert dialog builder instance
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        });
+        /*subunitspin.setOnItemSelectedListener(new OnItemSelectedListener() {
 
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
@@ -1181,7 +936,7 @@ public class SelectQuestion extends CustomTitle {
 
             public void onNothingSelected(AdapterView<?> arg0) {
             }
-        });
+        });*/
 
 
         /*if (isSubUnit && subUnitName.length > 0) {
@@ -1256,7 +1011,7 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] checklistID = new Integer[size];
         String[] checklistName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             CheckListAllocateTaskModel model = list.get(i);
             checklistName[i] = model.getCheckListName();
             checklistID[i] = model.getCheckListId();
@@ -1301,16 +1056,12 @@ public class SelectQuestion extends CustomTitle {
         int size = list.size();
         final Integer[] groupID = new Integer[size];
         String[] groupName = new String[size];
-        for(int i =0; i<size; i++){
+        for (int i = 0; i < size; i++) {
             GroupListAllocateTaskModel model = list.get(i);
             groupName[i] = model.getGroupName();
             groupID[i] = model.getGroupId();
         }
-        if (size != 0){
-            isGroupDataAvailable = true;
-        }else {
-            isGroupDataAvailable = false;
-        }
+        isGroupDataAvailable = size != 0;
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, groupName);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1397,84 +1148,12 @@ public class SelectQuestion extends CustomTitle {
 
         if (isGroup && groupName.length > 0) {
             grouptspin.setVisibility(View.VISIBLE);
-            subelementspin.setVisibility(View.GONE);
-
-            groupSpinMulti.setItems(groupName);
-            groupSpinMulti.hasNoneOption(true);
-            groupSpinMulti.setSelection(new int[]{0});
-            groupSpinMulti.setListener(new MultiSelectSpinner.OnMultipleItemsSelectedListener() {
-                @Override
-                public void selectedIndices(List<Integer> indices) {
-                    db.selectedGroupId = "";
-                    for (int count = 0; count < indices.size(); count++) {
-                        if (count == indices.size() - 1) {
-                            db.selectedGroupId += groupID[indices.get(count) - 1];
-                        } else {
-                            db.selectedGroupId += groupID[indices.get(count) - 1] + ",";
-                        }
-
-                    }
-
-                }
-
-                @Override
-                public void selectedStrings(List<String> strings) {
-
-                    db.selectedGroupName = "";
-                    for (int count = 0; count < strings.size(); count++) {
-                        if (count == strings.size() - 1) {
-                            db.selectedGroupName += strings.get(count);
-                        } else {
-                            db.selectedGroupName += strings.get(count) + ",";
-                        }
-
-                    }
-
-
-                }
-            });
 
 
         } else {
             grouptspin.setVisibility(View.VISIBLE);
-            subelementspin.setVisibility(View.VISIBLE);
         }
 
-
-    }
-
-
-    public boolean CheckWorkType(String table, String where) {
-        /*
-         * String where = "user_id='" + db.userId;
-         *
-         * Cursor cursor = db.select("Group1 as g,CheckList as c",
-         * "distinct(g.Grp_ID),g.Grp_Name,g.Node_id", where, null, null, null,
-         * "g.Grp_Name");
-         */
-
-        Cursor cursor = db.select(table, "count(*) as noitem", where, null,
-                null, null, null);
-
-        System.out.println("in checkWorkType..................");
-        // db.select(TABLE_NAME, COLUMNS, WHERE, SELECTION_ARGS, GROUP_BY,
-        // HAVING, OREDER_BY)
-        if (cursor.moveToFirst()) {
-            System.out.println(Integer.parseInt(cursor.getString(0)));
-            if (Integer.parseInt(cursor.getString(0)) > 0) {
-                System.out
-                        .println("entry present..............for worktype id");
-                cursor.close();
-                return true;
-            } else {
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.close();
-                }
-                return false;
-            }
-        } else {
-            return false;
-        }
 
     }
 
@@ -1485,38 +1164,6 @@ public class SelectQuestion extends CustomTitle {
         finish();
         db.closeDb();
         startActivity(new Intent(this, HomeScreen.class));
-    }
-
-
-    //changed by sayali
-    //27-2-2024
-    protected void callService1() {
-        Webservice service = new Webservice(SelectQuestion.this,
-                network_available, "Loading.. Please wait..", method, param,
-                value);
-        service.setdownloadListener(new downloadListener() {
-            @Override
-            public void dataDownloadedSuccessfully(String data) {
-                // if(requestid == 1)
-
-                responseData = data;
-                System.out.println("success data");
-
-                saveCoverageData(data);
-
-            }
-
-            @Override
-            public void dataDownloadFailed() {
-                displayDialog("Error", "Problem in connection.");
-            }
-
-            @Override
-            public void netNotAvailable() {
-                displayDialog("Error", "No network connection.");
-            }
-        });
-        service.execute("");
     }
 
     private String blockCharacterSet = "\'";
@@ -1557,18 +1204,19 @@ public class SelectQuestion extends CustomTitle {
             }
         }
     }
-    String strCoverage="";
+
+    String strCoverage = "";
+
     private void setMultipleCoverageDataToSpinner(String data) {
         String[] coverageData = data.split("~");
 
         // ArrayList<String> myCoverageData = (ArrayList<String>) Arrays.asList(coverageData);
-        strCoverage="";
+        strCoverage = "";
         ArrayList<String> myCoverageData = new ArrayList<String>();
         myCoverageData.addAll(Arrays.asList(coverageData));
-        for (int count=0;count<coverageData.length;count++){
-            strCoverage+=(count+1)+") "+myCoverageData.get(count)+"\n";
+        for (int count = 0; count < coverageData.length; count++) {
+            strCoverage += (count + 1) + ") " + myCoverageData.get(count) + "\n";
         }
-
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -2108,34 +1756,6 @@ public class SelectQuestion extends CustomTitle {
         // deleteImages();
     }
 
-    public boolean isQuestionAvailable() {
-        String whereClause = "Fk_CHKL_Id='" + db.selectedChecklistId
-                + "' AND Fk_Grp_ID='" + db.selectedGroupId + "' AND NODE_Id='"
-                + db.selectedBuildingId + "' AND user_id='" + db.userId + "'";
-
-        System.out.println("check avaible q===" + whereClause);
-        Cursor cursor = db.select("question",
-                "PK_question_id,QUE_Des,QUE_SequenceNo,QUE_Type", whereClause,
-                null, null, null, null);
-
-        if (cursor.moveToFirst()) {
-            System.out.println(Integer.parseInt(cursor.getString(0)));
-            if (Integer.parseInt(cursor.getString(0)) > 0) {
-
-                cursor.close();
-                return true;
-            } else {
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.close();
-                }
-                return false;
-            }
-        } else {
-            return false;
-        }
-
-    }
-
     public void ResetId() {
         db.selectedClientId = "";
         db.selectedSchemeId = "";
@@ -2158,7 +1778,7 @@ public class SelectQuestion extends CustomTitle {
     }
 
 
-     void displayCoverageDialog(String title, String message) {
+    void displayCoverageDialog(String title, String message) {
         AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.MyAlertDialogStyle).create();
         alertDialog.setTitle(title);
         alertDialog.setMessage(message);

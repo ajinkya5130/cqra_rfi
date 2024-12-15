@@ -12,6 +12,7 @@ import com.ob.database.dao.AllocateTaskDao
 import com.ob.database.dao.CheckListDao
 import com.ob.database.dao.ClientAllocateTaskDao
 import com.ob.database.dao.ClientDao
+import com.ob.database.dao.CreateRFITableDao
 import com.ob.database.dao.GroupListDao
 import com.ob.database.dao.ProjectDao
 import com.ob.database.dao.QuestionsDao
@@ -23,6 +24,7 @@ import com.ob.database.dao.WorkTypeDao
 import com.ob.database.db_tables.AllocateTaskTableModel
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
+import com.ob.database.db_tables.CreateRFITableModel
 import com.ob.database.db_tables.GroupListTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.QuestionsTableModel
@@ -46,6 +48,7 @@ import java.util.concurrent.Executors
     SubUnitTableModel::class,
     QuestionsTableModel::class,
     AllocateTaskTableModel::class,
+    CreateRFITableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -65,6 +68,7 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun questionsDao(): QuestionsDao
     abstract fun allocateTaskDao(): AllocateTaskDao
     abstract fun clientAllocateTaskDao(): ClientAllocateTaskDao
+    abstract fun createRFITableDao(): CreateRFITableDao
 
     companion object {
         const val TAG = "RFIRoomDb"

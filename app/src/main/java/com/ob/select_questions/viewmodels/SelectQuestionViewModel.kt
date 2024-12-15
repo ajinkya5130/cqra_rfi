@@ -10,9 +10,11 @@ import com.ob.database.RFIRoomDb
 import com.ob.database.db_tables.BuildingAllocateTaskModel
 import com.ob.database.db_tables.CheckListAllocateTaskModel
 import com.ob.database.db_tables.ClientAllocateTaskModel
+import com.ob.database.db_tables.CreateRFITableModel
 import com.ob.database.db_tables.FloorAllocateTaskModel
 import com.ob.database.db_tables.GroupListAllocateTaskModel
 import com.ob.database.db_tables.ProjectAllocateTaskModel
+import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.SubUnitAllocateTaskModel
 import com.ob.database.db_tables.UnitAllocateTaskModel
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel
@@ -21,6 +23,7 @@ import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.db.RfiDatabase.selectedSchemeId
 import com.ob.rfi.db.RfiDatabase.selectedUnitId
 import com.ob.rfi.db.RfiDatabase.selectedWorkTypeId
+import com.ob.rfi.db.RfiDatabase.userId
 import com.ob.rfi.models.APIErrorModel
 import com.ob.rfi.models.SpinnerType
 import kotlinx.coroutines.Dispatchers
@@ -55,10 +58,15 @@ class SelectQuestionViewModel: ViewModel() {
     var lvGroupListAllocateData: LiveData<Int>? = null
     private val _lvGroupListAllocateData = MutableLiveData<Int>()
 
+    var lvQuestionsData: LiveData<Int>? = null
+    private val _lvQuestionsData = MutableLiveData<Int>()
+
     private val _lvErrorData = MutableLiveData<APIErrorModel>()
     var lvErrorData: LiveData<APIErrorModel>
 
     var listOfClientAllocateTaskModel = arrayListOf<ClientAllocateTaskModel>()
+    var listOfCreateRFITableModel = arrayListOf<CreateRFITableModel>()
+    var listOfQuestions = arrayListOf<QuestionsTableModel>()
     var listOfSchemaAllocateTaskModel = arrayListOf<ProjectAllocateTaskModel>()
     var listOfWorkTypeAllocateTaskModel = arrayListOf<WorkTypeAllocateTaskModel>()
     var listOfBuildingAllocateTaskModel = arrayListOf<BuildingAllocateTaskModel>()
@@ -77,10 +85,26 @@ class SelectQuestionViewModel: ViewModel() {
         lvSubUnitAllocateData = _lvSubUnitAllocateData
         lvCheckListAllocateData = _lvCheckListAllocateData
         lvGroupListAllocateData = _lvGroupListAllocateData
+        lvQuestionsData = _lvQuestionsData
         lvErrorData = _lvErrorData
     }
     companion object{
         private const val TAG = "SelectQuestionViewModel"
+    }
+
+    fun getCreatedRFI(){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                listOfCreateRFITableModel =
+                    CustomTitle.rfiDB.createRFITableDao().getAllCreatedRFI() as ArrayList<CreateRFITableModel>
+                val count = listOfCreateRFITableModel.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - listOfCreateRFITableModel: count: $count ")
+                _lvClientAllocateData.postValue(count)
+            } catch (e: Exception) {
+                listOfCreateRFITableModel = arrayListOf()
+                Log.e(TAG, "${RFIRoomDb.TAG} - getClientAllocateDataFromDB: Exception: ", e)
+            }
+        }
     }
 
     fun getClientAllocateDataFromDB() {
@@ -259,7 +283,7 @@ class SelectQuestionViewModel: ViewModel() {
                     )
                 }
                 val count = listOfSubUnitAllocateTaskModel.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
+                Log.d(TAG, "${RFIRoomDb.TAG} - getSubUnitAllocateDataFromDB: count: $count ")
                 _lvSubUnitAllocateData.postValue(count)
             } catch (e: Exception) {
                 _lvErrorData.postValue(
@@ -268,7 +292,7 @@ class SelectQuestionViewModel: ViewModel() {
                         spinnerType = SpinnerType.SUB_UNIT_LIST
                     )
                 )
-                Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
+                Log.e(TAG, "${RFIRoomDb.TAG} - getSubUnitAllocateDataFromDB: Exception: ", e)
             }
         }
     }
@@ -325,5 +349,42 @@ class SelectQuestionViewModel: ViewModel() {
                 Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
             }
         }
+    }
+
+    fun insertCreatedRFI(cov: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val model = CreateRFITableModel()
+            model.user_id = userId
+            model.coverageText = cov
+
+            val id = CustomTitle.rfiDB.createRFITableDao().insert(model)
+            Log.d(TAG, "insertCreatedRFI: id: $id")
+            RfiDatabase.selectedrfiId = id.toString()
+            model._id = id.toInt()
+            model.FK_rfi_Id = id.toString()
+            val updatedId = CustomTitle.rfiDB.createRFITableDao().update(model)
+            Log.d(TAG, "insertCreatedRFI: updatedId: $updatedId")
+
+        }
+    }
+
+    fun isCoveragePresent(cov: String): Boolean {
+        return listOfCreateRFITableModel.any { it.coverageText == cov }
+    }
+
+    fun checkIsQuestionAvailable() {
+        viewModelScope.launch(Dispatchers.IO) {
+            listOfQuestions =
+                CustomTitle.rfiDB.questionsDao().getQuestionOnChecklistId(
+                    RfiDatabase.selectedChecklistId.toInt(),
+                    RfiDatabase.selectedBuildingId.toInt(),
+                    RfiDatabase.selectedGroupId.toInt()
+                ) as ArrayList<QuestionsTableModel>
+
+            val count = listOfQuestions.size
+            Log.d(TAG, "${RFIRoomDb.TAG} - listOfQuestions: count: $count ")
+            _lvQuestionsData.postValue(count)
+        }
+
     }
 }

@@ -727,9 +727,9 @@ class AllocateTaskViewModel : ViewModel() {
             try {
                 listOfQuestions =
                     CustomTitle.rfiDB.questionsDao().getAllQuestionsList(
-                        clientId.toString(),
-                        RfiDatabase.selectedSchemeId,
-                        RfiDatabase.selectedGroupId
+                        clientId,
+                        RfiDatabase.selectedSchemeId.toInt(),
+                        RfiDatabase.selectedGroupId.toInt()
                     ) as ArrayList<QuestionsTableModel>
                 if (listOfQuestions.size != 0) {
                     listOfQuestions.add(

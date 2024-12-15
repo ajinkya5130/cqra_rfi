@@ -124,7 +124,7 @@ public class RfiQuestionSelect extends CustomTitle{
 				
 				//PK_question_id,QUE_Des,QUE_SequenceNo,QUE_Type, NODE_Id, Fk_CHKL_Id, Fk_Grp_ID,user_id
 				
-				Cursor cursor = db.select("question", "distinct(PK_question_id),QUE_Des,QUE_SequenceNo,QUE_Type",whereClause, null, null, null, null);
+				Cursor cursor = db.select("question", "distinct(questionId),question,questionSequence,questionType",whereClause, null, null, null, null);
 		
 				String[] q_id=new String[cursor.getCount()];
 				String[] q_text=new String[cursor.getCount()];
@@ -136,9 +136,9 @@ public class RfiQuestionSelect extends CustomTitle{
 						/*Qdataid[cursor.getPosition()] = Integer.parseInt(cursor.getString(0));
 						questionData[cursor.getPosition()] = cursor.getString(1);*/
 						
-						question_seq_id=cursor.getString(cursor.getColumnIndex("QUE_SequenceNo"));
-						question_type=cursor.getString(cursor.getColumnIndex("QUE_Type"));
-						current_ques_id=cursor.getString(cursor.getColumnIndex("PK_question_id"));
+						question_seq_id=cursor.getString(cursor.getColumnIndex("questionSequence"));
+						question_type=cursor.getString(cursor.getColumnIndex("questionType"));
+						current_ques_id=cursor.getString(cursor.getColumnIndex("questionId"));
 						
 						InsertDefaultAnswer();
 						System.out.println("question data-------"+cursor.getString(0).toString());
