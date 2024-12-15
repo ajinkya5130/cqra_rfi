@@ -125,6 +125,11 @@ public class SelectQuestion extends CustomTitle {
             if (selectedRadioButton != null) {
                 // Get the text of the selected radio button
                 statusValue = selectedRadioButton.getText().toString();
+                if (statusValue.equalsIgnoreCase("Partial RFI")){
+                    displayErrorDialog("Status","RFI Status Partially Completed: The work with the selected stage is not yet fully completed. RFI can be created again for the same selection.");
+                }else {
+                    displayErrorDialog("Status","RFI Status Fully Completed: The work with the selected stage is fully completed. RFI cannot be created again for the same selection.");
+                }
                 //Toast.makeText(this, "Selected: " + selectedText, Toast.LENGTH_SHORT).show();
             } else {
                 statusValue = "";

@@ -15,4 +15,10 @@ interface AnswerDao : CustomDao<AnswerTableModel> {
         selectedRfiId: String
     ): AnswerTableModel
 
+    @Query("SELECT DISTINCT FK_question_id,* FROM answer WHERE fk_question_id = :qId AND rfi_id = :selectedRfiId")
+     suspend fun getAnswerUsingRfId(
+        qId: String,
+        selectedRfiId: String
+    ): AnswerTableModel
+
 }

@@ -272,8 +272,10 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         setClientData();
+                        hideProgressDialog();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         viewModel.getClientProjectWorkType(31, "Maker");
                     }
                 }
@@ -285,10 +287,12 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: setSchemeSpinnerData");
+                        hideProgressDialog();
                         setSchemeSpinnerData();
                     }else {
                         //updateData();
                         Log.d(TAG, "observerData: getLvProjectData ");
+                        showProgressDialogWithoutMessage();
                         viewModel.getProjectApi(31, "Maker");
                     }
                 }
@@ -300,9 +304,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvWorkTypeData");
+                        hideProgressDialog();
                         setWorkTypeSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvWorkTypeData ");
                         viewModel.getWorkTypeSequenceApi(31, "Maker");
                     }
@@ -315,9 +321,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvStructureData");
+                        hideProgressDialog();
                         setBuildingSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvStructureData ");
                         viewModel.getStructureApi(31, "Maker");
                     }
@@ -330,9 +338,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: setCheckListSpinnerData");
+                        hideProgressDialog();
                         setCheckListSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvWorkTypeData ");
                         viewModel.getCheckListApi(31, "Maker");
                     }
@@ -345,9 +355,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: setCheckListSpinnerData");
+                        hideProgressDialog();
                         setGroupSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvWorkTypeData ");
                         viewModel.getGroupListApi(31, "Maker");
                     }
@@ -360,9 +372,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvStageData");
+                        hideProgressDialog();
                         setFloorSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvStageData ");
                         viewModel.getStageApi(31, "Maker");
                     }
@@ -375,9 +389,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvStageData");
+                        hideProgressDialog();
                         setUnitSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvStageData ");
                         viewModel.getUnitApi(31, "Maker");
                     }
@@ -390,9 +406,11 @@ public class AllocateTask extends CustomTitle {
 
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvSubUnitData");
+                        hideProgressDialog();
                         setSubUnitSpinnerData();
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvSubUnitData ");
                         viewModel.getSubUnitApi(31, "Maker");
                     }
@@ -404,9 +422,11 @@ public class AllocateTask extends CustomTitle {
                     Log.d(TAG, "onCreate: getLvQuestionsData: "+value);
                     if (value!=0){
                         Log.d(TAG, "observerData: getLvQuestionsData");
+                        hideProgressDialog();
                         displayErrorDialog("Questions","Questions are available");
                     }else {
                         //updateData();
+                        showProgressDialogWithoutMessage();
                         Log.d(TAG, "observerData: getLvQuestionsData ");
                         viewModel.getQuestionsApi(31);
                     }
@@ -415,6 +435,7 @@ public class AllocateTask extends CustomTitle {
 
         Objects.requireNonNull(viewModel.getLvErrorData()).observe(
                 this, value ->{
+                    hideProgressDialog();
                     Log.d(TAG, "onCreate: getLvStageData: "+value);
                     resetSpinner(value.getSpinnerType());
                     displayErrorDialog("Error",value.getMessage());

@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -45,8 +44,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.ob.database.db_tables.AnswerTableModel;
+import com.ob.database.db_tables.QuestionsTableModel;
 import com.ob.rfi.db.RfiDatabase;
+import com.ob.rfi.viewmodels.RFIQuestionScrollViewModel;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class RfiQuestionireScroll extends CustomTitleDuplicate {
 
@@ -63,19 +67,17 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
     private RadioButton[] radioButtons;
     private EditText remark;
     private RfiDatabase db;
-    private Cursor questionCursor;
     private int imageCount;
     private boolean isanwered;
     private String TempsnapLoacl1;
     private String TempsnapLoacl2;
-    private Cursor questionAnswerCursor;
     private String previousAns;
     private String previousRem;
     private static Button imageButton;
     String[] snaps = new String[]{"", ""};
     String[] temp_snaps = new String[]{"", ""};
-    private Object question_seq_id;
-    private Object question_type;
+    private String question_seq_id;
+    private String question_type;
     private AlphaAnimation anim;
     private File sdImageMainDirectory;
     private String timestamp;
@@ -89,11 +91,13 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
     private SharedPreferences checkPreferences;
     private String drawing;
 
+    private static final String TAG = "RfiQuestionireScroll";
 
     String currentPhotoPath;
     String imageName;
     private static final int CAMERA_REQUEST = 1888;
     File imgFile;
+    private RFIQuestionScrollViewModel viewModel;
 
 
     @Override
@@ -101,7 +105,7 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
         // TODO Auto-generated method stub
         super.onCreate(savedInstanceState);
         setContentView(R.layout.rfi_questionire_scroll);
-
+        viewModel = new ViewModelProvider(this).get(RFIQuestionScrollViewModel.class);
         Intent int1 = getIntent();
         qestion_id = int1.getStringExtra("Q_id");
         //coverage=int1.getStringExtra("coverage");
@@ -159,39 +163,6 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
                 if (imageCount < 2) {
 
 					try {
-//						File root = new File(Environment.getExternalStorageDirectory()
-//								+ File.separator + "RFI" + File.separator);
-//						root.mkdirs();
-//						Date d = new Date();
-//						String g=db.selectedrfiId.replace(" ","_");
-//						String imageName = g+"_"+db.selectedNodeId.trim()+"_"+db.selectedChecklistId.trim()+"_"+
-//						db.selectedGroupId.trim()+"_"+db.userId.trim()+"_"+qestion_id+"_"+question_seq_id+"_"+question_type
-//								+ "_" + d.getTime()+"_" + imageCount+".jpg";
-//						//snaps[imageCount] = imageName;
-//
-//						/*if(!snaps[0].equalsIgnoreCase("")){
-//							snaps[1] = imageName;
-//							System.out.println("first cinduition.........");
-//						}else*/
-//						if (!snaps[0].equalsIgnoreCase("") && !snaps[1].equalsIgnoreCase("")){
-//							snaps[0] = imageName;
-//							System.out.println("second.. cinduition.........");
-//						} else if(!snaps[0].equalsIgnoreCase("")){
-//							snaps[1] = imageName;
-//							System.out.println("first cinduition.........");
-//						}
-//
-//						else{
-//							System.out.println("third cinduition.........");
-//							snaps[imageCount] = imageName;
-//						}
-//
-//
-//						System.out.println("Image Name "+imageName);
-//						sdImageMainDirectory = new File(root, imageName);
-//						tempFilename = getNextFileName().getAbsolutePath();
-//                    startCameraActivity();
-
 
                         AlertDialog alertDialog;
                         alertDialog = new AlertDialog.Builder(RfiQuestionireScroll.this, R.style.MyAlertDialogStyle).create();
@@ -269,95 +240,77 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
 
         RetriveQuestionData();
 
+        observeLiveData();
 
+
+    }
+    private void observeLiveData() {
+        Objects.requireNonNull(viewModel.getLvQuestionsData()).observe(
+                this, value -> {
+                    Log.d(TAG, "getLvClientAllocateData: value: " + value);
+                    if (value!=0){
+                        setQuestionAdapter();
+                    }
+                }
+        );
+    }
+
+    private void setQuestionAdapter() {
+        ArrayList<QuestionsTableModel> listOfQuestions = viewModel.getListOfQuestions();
+        int size = listOfQuestions.size();
+        TextView questionText = (TextView) findViewById(R.id.questiontext);
+        for (int i = 0; i < size; i++){
+            QuestionsTableModel model = listOfQuestions.get(i);
+            question_seq_id = String.valueOf(model.getQuestionSequence());
+            question_type = model.getQuestionType();
+            questionText.setText(model.getQuestion());
+            questionText.setAnimation(anim);
+            questionText.startAnimation(anim);
+            SingleChoiceLayout();
+        }
     }
 
 
     public void RetriveQuestionData() {
         String Q_id = qestion_id;
-        questionCursor = null;
         imageCount = 0;
         isanwered = false;
         TempsnapLoacl1 = "";
         TempsnapLoacl2 = "";
 
+        try {
+            // setting background colour
+            viewModel.getQuestionAnswerAsync(Q_id,value ->{
 
-        System.out.println("q___________----iddddddddddd" + Q_id);
-
-        String whereClause12 = "PK_question_id='" + Q_id +
-                "' AND Fk_CHKL_Id='" + db.selectedChecklistId + "' AND Fk_Grp_ID='"
-                + db.selectedGroupId + "' AND NODE_Id='" + db.selectedBuildingId + "' AND user_id='" + db.userId + "'";
-
-
-        String whereClause121 = "FK_question_id='" + Q_id +
-                "' AND Fk_CHKL_Id='" + db.selectedChecklistId + "' AND Fk_Grp_ID='"
-                + db.selectedGroupId + "' AND  Rfi_id='" + db.selectedrfiId + "' AND user_id='" + db.userId + "'";
-
-        questionAnswerCursor = db.select("Answer", "ans_text,remark,snap1,snap2", whereClause121, null, null, null, null);
-        int cnt = 0;
-        if (questionAnswerCursor.moveToFirst()) {
-            do {
-                isanwered = true;
-                System.out.println("question data....");
-                System.out.println("answer...." + questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("ans_text")));
-                System.out.println("remark...." + questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("remark")));
-                System.out.println("snap1...." + questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("snap1")));
-                System.out.println("snap2...." + questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("snap2")));
-                cnt++;
-
-
-                previousAns = questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("ans_text"));
-                previousRem = questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("remark"));
-                TempsnapLoacl1 = questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("snap1"));
-                TempsnapLoacl2 = questionAnswerCursor.getString(questionAnswerCursor.getColumnIndex("snap2"));
-
-
-            } while (questionAnswerCursor.moveToNext());
-        }
-        //Storing already answered images
-
-        if (cnt > 0) {
-            if (!TempsnapLoacl1.equalsIgnoreCase("")) {
-                //temp_snaps[0]=TempsnapLoacl1;
-                snaps[0] = TempsnapLoacl1;
-            } else {
-                snaps[0] = "";
-            }
-            if (!TempsnapLoacl2.equalsIgnoreCase("")) {
-                //temp_snaps[1]=TempsnapLoacl2;
-                snaps[1] = TempsnapLoacl2;
-            } else {
-                snaps[1] = "";
-            }
+                if (value != null) {
+                    // Handle the result
+                    setUIToSelectedView(value);
+                    Log.d(TAG, "Answer: " + value.toString());
+                } else {
+                    // Handle error case
+                    Log.e(TAG, "Failed to fetch answer");
+                }
+                return null;
+            });
+            viewModel.getQuestionListFromDb();
+        }catch (Exception e){
+            Log.e(TAG, "getView: Exception: ",e );
         }
 
+    }
 
-        System.out.println("where clause----" + whereClause12);
-        questionCursor = db.select("question", "distinct(PK_question_id),QUE_Des,QUE_SequenceNo,QUE_Type", whereClause12, null, null, null, null);
-        questionCursor.moveToNext();
-
-
-        if (questionCursor.moveToFirst()) {
-            do {
-                System.out.println("calling----------------");
-                TextView questionText = (TextView) findViewById(R.id.questiontext);
-
-                question_seq_id = questionCursor.getString(questionCursor.getColumnIndex("QUE_SequenceNo"));
-                question_type = questionCursor.getString(questionCursor.getColumnIndex("QUE_Type"));
-                questionText.setText(questionCursor.getString(questionCursor.getColumnIndex("QUE_Des")));
-                questionText.setAnimation(anim);
-                questionText.startAnimation(anim);
-                SingleChoiceLayout();
-
-                System.out.println("question data-------" + questionCursor.getString(0).toString());
-
-            } while (questionCursor.moveToNext());
-        } else {
-
-            System.out.println("not question-----------------");
+    private void setUIToSelectedView(AnswerTableModel model) {
+        isanwered = true;
+        previousAns = model.getAnswerFlag();
+        previousRem = model.getRemark();
+        TempsnapLoacl1 = model.getSnap1();
+        if (!TempsnapLoacl1.isEmpty()){
+            snaps[0] = TempsnapLoacl1;
         }
-
-
+        TempsnapLoacl2 = model.getSnap2();
+        if (!TempsnapLoacl2.isEmpty()){
+            snaps[1] = TempsnapLoacl2;
+        }
     }
 
 
@@ -400,7 +353,7 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
 
             radioButtons[i].setLayoutParams(layoutParams);
 
-            if (options[i].toString().trim().equalsIgnoreCase(db.selectedClient.trim())) {
+            if (options[i].toString().trim().equalsIgnoreCase(RfiDatabase.selectedClient.trim())) {
                 radioButtons[i].setChecked(false);
             }
             remark = new EditText(getApplicationContext());
@@ -410,23 +363,7 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
 
             radioGroup.addView(radioButtons[i]);
             imageButton.setVisibility(View.VISIBLE);
-            //direction.setVisibility(View.VISIBLE);
 
-			/*snaps = new String[]{"",""};
-			imageCount=0;
-			imageButton.setText("Capture Image("+imageCount+"/2)");*/
-
-
-			/*radioButtons[i].setOnClickListener(new OnClickListener() {
-
-				@Override
-				public void onClick(View v) {
-
-					RadioButton rb =(RadioButton)v;
-					//checkNc(rb);
-
-				}
-			}); */
         }
 
 
@@ -443,8 +380,6 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
             }
         };
         remark.setFilters(new InputFilter[]{filter});
-
-        String QUE_Type = questionCursor.getString(questionCursor.getColumnIndex("QUE_Type"));
 
         childLayout.addView(radioGroup);
 
@@ -476,8 +411,8 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
 
 
         TextView surveyDetail = (TextView) findViewById(R.id.roomTypeText);
-        surveyDetail.setText(db.selectedSchemeName + " / " +
-                db.selectedclientname + "/" + db.selectedChecklistName);
+        surveyDetail.setText(RfiDatabase.selectedSchemeName + " / " +
+                RfiDatabase.selectedclientname + "/" + RfiDatabase.selectedChecklistName);
         int length = surveyDetail.getText().toString().length();
         if (length > 42) {
             Animation anim = new TranslateAnimation(5, -((length - 42) * 7), 0, 0);
@@ -491,7 +426,7 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
         surveyDetail.requestFocus();
 
         //((TextView)findViewById(R.id.roundNoText)).setText("CheckListName : "+db.selectedChecklistName);
-        ((TextView) findViewById(R.id.tradeText)).setText("Question.Type : " + QUE_Type);
+        ((TextView) findViewById(R.id.tradeText)).setText("Question.Type : " + question_type);
 
 
     }
@@ -522,9 +457,9 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
         root.mkdirs();
 
         Date d = new Date();
-        String g = db.selectedrfiId.replace(" ", "_");
-        imageName = g + "_" + db.selectedNodeId.trim() + "_" + db.selectedChecklistId.trim() + "_" +
-                db.selectedGroupId.trim() + "_" + db.userId.trim() + "_" + qestion_id + "_" + question_seq_id + "_"
+        String g = RfiDatabase.selectedrfiId.replace(" ", "_");
+        imageName = g + "_" + RfiDatabase.selectedNodeId.trim() + "_" + RfiDatabase.selectedChecklistId.trim() + "_" +
+                RfiDatabase.selectedGroupId.trim() + "_" + RfiDatabase.userId.trim() + "_" + qestion_id + "_" + question_seq_id + "_"
                 + "_" + d.getTime() + "_" + imageCount + ".jpg";
         snaps[imageCount] = imageName;
 
@@ -695,70 +630,65 @@ public class RfiQuestionireScroll extends CustomTitleDuplicate {
         String img3 = "";
         String img4 = "";
 
+        try {
+            // setting background colour
+            viewModel.getQuestionAnswerUsingRfIdAsync(qestion_id,value ->{
 
-        String rfidata = "'" + db.selectedClientId + "','" + db.selectedSchemeId + "','" + db.selectedlevelId + "','" + db.selectedBuildingId + "','" + db.selectedFloorId + "','" +
-                db.selectedUnitId + "','" + db.selectedSubUnitId + "','" + db.selectedElementId + "','" + db.selectedSubElementId + "','" + coverage + "','"
-
-                + answer + "','"
-                + remark.getText().toString() + "','" + snaps[0] + "','"
-                + snaps[1] + "','" + img3 + "','" + img4 + "','" + db.selectedrfiId + "','"
-                + rfi_date + "','" + qestion_id + "','" + question_seq_id + "','" + question_type
-                + "','" + db.selectedNodeId + "','" + db.selectedChecklistId + "','" + db.selectedGroupId + "','" + " " + "','" + db.userId + "'";
-
-
-        String whereClause1 = "Rfi_id='" + db.selectedrfiId + "' AND FK_question_id='" + qestion_id + "' AND user_id='" + db.userId + "'";
-        Cursor cursor1 = db.select("Answer", "FK_question_id", whereClause1, null, null, null, null);
-        boolean isanswerd = false;
-        //check for update question
-        if (cursor1.moveToFirst()) {
-            do {
-                isanswerd = true;
-
-            } while (cursor1.moveToNext());
-        } else {
-            System.out.println("not question-----------------");
+                if (value != null) {
+                    // Handle the result
+                    AnswerTableModel answerTableModel = new AnswerTableModel();
+                    answerTableModel.setCL_Id(RfiDatabase.selectedClientId);
+                    answerTableModel.setPRJ_Id(RfiDatabase.selectedSchemeId);
+                    answerTableModel.setLevel_int(RfiDatabase.selectedlevelId);
+                    answerTableModel.setStructure_Id(RfiDatabase.selectedBuildingId);
+                    answerTableModel.setStage_Id(RfiDatabase.selectedFloorId);
+                    answerTableModel.setUnit_id(RfiDatabase.selectedUnitId);
+                    answerTableModel.setSub_Unit_Id(RfiDatabase.selectedSubUnitId);
+                    answerTableModel.setCoverage_str(coverage);
+                    answerTableModel.setAns_text(answer);
+                    answerTableModel.setRemark(remark.getText().toString());
+                    answerTableModel.setRfi_id(RfiDatabase.selectedrfiId);
+                    answerTableModel.setFK_question_id(qestion_id);
+                    answerTableModel.setFK_QUE_SequenceNo(question_seq_id);
+                    answerTableModel.setFK_QUE_Type(question_type);
+                    answerTableModel.setFK_NODE_Id(RfiDatabase.selectedNodeId);
+                    answerTableModel.setFk_CHKL_Id(RfiDatabase.selectedChecklistId);
+                    answerTableModel.setFk_Grp_ID(RfiDatabase.selectedGroupId);
+                    answerTableModel.setCheck_date(rfi_date);
+                    answerTableModel.setDrawing_no(drawing);
+                    answerTableModel.setSnap1(snaps[0]);
+                    answerTableModel.setSnap2(snaps[1]);
+                    answerTableModel.setSnap3(img3);
+                    answerTableModel.setSnap4(img4);
+                    answerTableModel.setUser_id(RfiDatabase.userId);
+                    if (value.getPK_Answer_id() == 0){
+                        answerTableModel.setDated(rfi_date);
+                        Log.d(TAG, "saveAnswer: inserted data, "+answerTableModel);
+                        viewModel.insertDefaultAnswer(answerTableModel);
+                    }else {
+                        answerTableModel.setAnswerFlag("1");
+                        answerTableModel.setPK_Answer_id(value.getPK_Answer_id());
+                        Log.d(TAG, "saveAnswer: updated data, "+answerTableModel);
+                        viewModel.updateQuestionAnswer(answerTableModel);
+                    }
+                    Log.d(TAG, "DB Answer: " + value);
+                    snaps = new String[]{"", ""};
+                    imageCount = 0;
+                    System.out.println("image count in saveanswer=================" + imageCount);
+                    imageButton.setText("Capture Image(0/2)");
+                    remark.setText("");
+                    Intent int1 = new Intent(getApplicationContext(), RfiQuestionSelect.class);
+                    finish();
+                    startActivity(int1);
+                } else {
+                    // Handle error case
+                    Log.e(TAG, "Failed to fetch answer");
+                }
+                return null;
+            });
+        }catch (Exception e){
+            Log.e(TAG, "getView: Exception: ",e );
         }
-
-        if (cursor1 != null && !cursor1.isClosed()) {
-            cursor1.close();
-        }
-
-        if (!isanswerd) {
-            db.insert(
-                    "Answer",
-                    "CL_Id,PRJ_Id,Level_int,Structure_Id,Stage_Id," +
-                            "Unit_id,Sub_Unit_Id,Element_Id,SubElement_Id,Coverage_str,ans_text,remark,snap1,snap2,snap3,snap4,Rfi_id,dated," +
-                            "FK_question_id,FK_QUE_SequenceNo,FK_QUE_Type,FK_NODE_Id,Fk_CHKL_Id, Fk_Grp_ID,checker_remark,check_date,drawing_no,answerFlag,user_id",
-                    rfidata);
-            System.out.println("inserted=================" + rfidata);
-
-
-        } else {
-
-            db.update("Answer", "ans_text='"
-                    + answer + "',remark='" + remark.getText().toString() + "',snap1='" + snaps[0] + "',snap2='" + snaps[1] + "',snap3='" + img3 + "',snap4='" + img4 + "',check_date='" + rfi_date + "',answerFlag='" + "1" + "'", "Rfi_id='" + db.selectedrfiId
-                    + "' AND CL_Id=" + db.selectedClientId + " AND PRJ_Id="
-                    + db.selectedSchemeId + " AND Structure_Id="
-                    + db.selectedBuildingId + " AND FK_question_id='"
-                    + qestion_id + "'");
-
-
-            System.out.println("updated=================" + rfi_date);
-
-        }
-
-
-        snaps = new String[]{"", ""};
-        imageCount = 0;
-        System.out.println("image count in saveanswer=================" + imageCount);
-        imageButton.setText("Capture Image(0/2)");
-        remark.setText("");
-
-
-        Intent int1 = new Intent(getApplicationContext(), RfiQuestionSelect.class);
-        finish();
-        startActivity(int1);
-
 
     }
 

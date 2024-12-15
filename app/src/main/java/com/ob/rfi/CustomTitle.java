@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.ob.database.RFIRoomDb;
+import com.ob.rfi.service.GlobalProgressDialog;
 
 
 public class CustomTitle extends AppCompatActivity {
@@ -129,13 +130,13 @@ public class CustomTitle extends AppCompatActivity {
 	private Editor editor;
 
 	protected void showProgressDialog(String message) {
-		//mProgressDialog = new GlobalProgressDialogFragment();
-		GlobalProgressDialogFragment.Companion.setProgressMessage(message);
-		GlobalProgressDialogFragment.Companion.showDialog(getSupportFragmentManager());
-		//mProgressDialog.show(getSupportFragmentManager(), "globalProgressDialog");
+		GlobalProgressDialog.INSTANCE.showWithMessage(this,message);
+	}
+	protected void showProgressDialogWithoutMessage() {
+		GlobalProgressDialog.INSTANCE.show(this);
 	}
 	protected void hideProgressDialog() {
-		GlobalProgressDialogFragment.Companion.hideDialog(getSupportFragmentManager());
+		GlobalProgressDialog.INSTANCE.dismiss();
 	}
 	
 	@Override

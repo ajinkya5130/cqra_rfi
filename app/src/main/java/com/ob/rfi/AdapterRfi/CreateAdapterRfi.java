@@ -97,8 +97,7 @@ public class CreateAdapterRfi extends BaseAdapter {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				db.LastSelectedListItem = String.valueOf(position);
+				RfiDatabase.LastSelectedListItem = String.valueOf(position);
 				System.out.println("q_id=" + Q_id[position]
 						+ "  question text==" + q_text[position]);
 
