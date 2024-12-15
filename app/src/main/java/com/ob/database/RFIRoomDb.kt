@@ -9,6 +9,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ob.database.RFIRoomDb.Companion.TAG
 import com.ob.database.dao.AllocateTaskDao
+import com.ob.database.dao.AnswerDao
 import com.ob.database.dao.CheckListDao
 import com.ob.database.dao.ClientAllocateTaskDao
 import com.ob.database.dao.ClientDao
@@ -22,6 +23,7 @@ import com.ob.database.dao.SubUnitDao
 import com.ob.database.dao.UnitDao
 import com.ob.database.dao.WorkTypeDao
 import com.ob.database.db_tables.AllocateTaskTableModel
+import com.ob.database.db_tables.AnswerTableModel
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.CreateRFITableModel
@@ -49,6 +51,7 @@ import java.util.concurrent.Executors
     QuestionsTableModel::class,
     AllocateTaskTableModel::class,
     CreateRFITableModel::class,
+    AnswerTableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -69,6 +72,7 @@ abstract class RFIRoomDb : RoomDatabase() {
     abstract fun allocateTaskDao(): AllocateTaskDao
     abstract fun clientAllocateTaskDao(): ClientAllocateTaskDao
     abstract fun createRFITableDao(): CreateRFITableDao
+    abstract fun answerDao(): AnswerDao
 
     companion object {
         const val TAG = "RFIRoomDb"

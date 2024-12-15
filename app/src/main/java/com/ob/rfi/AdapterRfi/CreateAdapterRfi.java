@@ -3,6 +3,7 @@ package com.ob.rfi.AdapterRfi;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -10,9 +11,11 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.ob.database.db_tables.AnswerTableModel;
 import com.ob.rfi.R;
 import com.ob.rfi.RfiQuestionireScroll;
 import com.ob.rfi.db.RfiDatabase;
+import com.ob.rfi.viewmodels.RFIQuestionSelectViewModel;
 
 public class CreateAdapterRfi extends BaseAdapter {
 	private final Activity context;
@@ -24,13 +27,16 @@ public class CreateAdapterRfi extends BaseAdapter {
 	private RfiDatabase db;
 	private Cursor questionAnswerCursor;
 	private String previousAns;
+    private static final String TAG = "CreateAdapterRfi";
 
+	private RFIQuestionSelectViewModel viewModel;
 	public CreateAdapterRfi(Activity context, String[] Q_id, String[] q_text,
-			String coverage) {
+							String coverage, RFIQuestionSelectViewModel rfiQuestionSelectViewModel) {
 		this.context = context;
 		this.Q_id = Q_id;
 		this.q_text = q_text;
 		this.coverage = coverage;
+		viewModel = rfiQuestionSelectViewModel;
 		System.out.println("in Adapter----------------");
 		db = new RfiDatabase(context);
 	}
@@ -71,71 +77,21 @@ public class CreateAdapterRfi extends BaseAdapter {
 		count++;
 		try {
 			// setting background colour
-			String whereClause121 = "FK_question_id='" + Q_id[position]
-					+ "' AND Fk_CHKL_Id='" + db.selectedChecklistId
-					+ "' AND Fk_Grp_ID='" + db.selectedGroupId
-					+ "' AND  Rfi_id='" + db.selectedrfiId + "' AND user_id='"
-					+ db.userId + "'";
+			viewModel.getQuestionAnswerAsync(Q_id[position],value ->{
 
-			questionAnswerCursor = db.select("Answer", "answerFlag,ans_text",
-					whereClause121, null, null, null, null);
-
-			/*
-			 * System.out.println("count in adaptor-------"+questionAnswerCursor.
-			 * getCount());
-			 */
-
-			if (questionAnswerCursor.moveToFirst()) {
-				do {
-
-					if (questionAnswerCursor.getString(
-							questionAnswerCursor.getColumnIndex("answerFlag"))
-							.equalsIgnoreCase("1")
-							&& questionAnswerCursor.getString(
-									questionAnswerCursor
-											.getColumnIndex("ans_text"))
-									.equalsIgnoreCase("0")) {
-						rowView.setBackgroundResource(R.drawable.list_back_answerd);
-					} else if (questionAnswerCursor.getString(
-							questionAnswerCursor.getColumnIndex("answerFlag"))
-							.equalsIgnoreCase("1")
-							&& questionAnswerCursor.getString(
-									questionAnswerCursor
-											.getColumnIndex("ans_text"))
-									.equalsIgnoreCase("1")) {
-						rowView.setBackgroundResource(R.drawable.list_item_back);
-					} else if (questionAnswerCursor.getString(
-							questionAnswerCursor.getColumnIndex("answerFlag"))
-							.equalsIgnoreCase("1")
-							&& questionAnswerCursor.getString(
-									questionAnswerCursor
-											.getColumnIndex("ans_text"))
-									.equalsIgnoreCase("2")) {
-						rowView.setBackgroundResource(R.drawable.list_back_gray);
-					}
-
-					else {
-						rowView.setBackgroundResource(R.drawable.list_back_constant);
-					}
-
-					previousAns = questionAnswerCursor
-							.getString(questionAnswerCursor
-									.getColumnIndex("answerFlag"));
-
-				} while (questionAnswerCursor.moveToNext());
-			}
-
-			/*
-			 * if(previousAns.equalsIgnoreCase("1")){
-			 * rowView.setBackgroundResource(R.drawable.list_back_answerd);
-			 * }else{ rowView.setBackgroundResource(R.drawable.list_item_back);
-			 * 
-			 * }
-			 */
-
-		} finally {
-			questionAnswerCursor.close();
-		}
+				if (value != null) {
+					// Handle the result
+					setUIToSelectedView(value,rowView);
+					Log.d(TAG, "Answer: " + value.toString());
+				} else {
+					// Handle error case
+					Log.e(TAG, "Failed to fetch answer");
+				}
+                return null;
+            });
+        }catch (Exception e){
+            Log.e(TAG, "getView: Exception: ",e );
+        }
 
 		rowView.setOnClickListener(new OnClickListener() {
 
@@ -156,6 +112,19 @@ public class CreateAdapterRfi extends BaseAdapter {
 		});
 
 		return rowView;
+	}
+
+	private void setUIToSelectedView(AnswerTableModel model, View rowView) {
+		if (model.getAnswerFlag().equalsIgnoreCase("1") && model.getAns_text().equalsIgnoreCase("0")){
+			rowView.setBackgroundResource(R.drawable.list_back_answerd);
+		}else if (model.getAnswerFlag().equalsIgnoreCase("1") && model.getAns_text().equalsIgnoreCase("1")){
+			rowView.setBackgroundResource(R.drawable.list_item_back);
+		}else if (model.getAnswerFlag().equalsIgnoreCase("1") && model.getAns_text().equalsIgnoreCase("2")){
+			rowView.setBackgroundResource(R.drawable.list_back_gray);
+		}else {
+			rowView.setBackgroundResource(R.drawable.list_back_constant);
+		}
+		previousAns = model.getAnswerFlag();
 	}
 
 }

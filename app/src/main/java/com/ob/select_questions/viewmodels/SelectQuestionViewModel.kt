@@ -336,7 +336,7 @@ class SelectQuestionViewModel: ViewModel() {
                         GroupListAllocateTaskModel(groupName = "Select Data", groupId = NO_DATA_AVAILABLE_VAL.toInt())
                     )
                 }
-                val count = listOfCheckListAllocateTaskModel.size
+                val count = listOfGroupListAllocateTaskModel.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
                 _lvGroupListAllocateData.postValue(count)
             } catch (e: Exception) {

@@ -1031,9 +1031,9 @@ public class SelectQuestion extends CustomTitle {
                     db.selectedChecklistId = checklistID[position].toString();
                     db.selectedChecklistName = checklistspin.getSelectedItem()
                             .toString();
-                    viewModel.getGroupAllocateDataFromDB();
                     grouptspin.setClickable(true);
                     grouptspin.setSelection(0);
+                    viewModel.getGroupAllocateDataFromDB();
 
                 } else {
                     db.selectedChecklistId = "";
