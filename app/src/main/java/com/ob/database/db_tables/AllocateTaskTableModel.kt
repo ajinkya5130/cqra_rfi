@@ -13,7 +13,7 @@ data class AllocateTaskTableModel (
     var structureId: Int = 0,
     var stageId: Int = 0,
     var unitId: Int = 0,
-    var subUnitId: Int = 0,
+    var subUnitId: String = "",
     var checkListId: Int = 0,
     var groupId: Int = 0,
     var activitySequenceId: Int = 0,

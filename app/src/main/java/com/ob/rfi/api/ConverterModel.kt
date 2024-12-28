@@ -10,6 +10,7 @@ import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.SubUnitTableModel
 import com.ob.database.db_tables.UnitTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
+import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.models.ChecklistApiResponseModelItem
 import com.ob.rfi.models.ClientApiResponseModelItem
 import com.ob.rfi.models.GroupListApiResponseModelItem
@@ -42,6 +43,7 @@ object ConverterModel {
             Scheme_Adrs = model.prjAddress
             Scheme_Region = model.prjRegion
             PK_Scheme_ID = model.prjId.toString()
+            user_id = RfiDatabase.userId
             //scrolling_status = model.prjScrollinguistatus
         }
         return projModel
@@ -70,6 +72,7 @@ object ConverterModel {
                 Bldg_Name = model.structureName
                 Build_scheme_id = model.projectId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
+                user_id = RfiDatabase.userId
             })
         }
         return list
@@ -84,6 +87,7 @@ object ConverterModel {
                 Checklist_Name = model.chklName
                 Node_Id = selectedNodeId
                 FK_WorkTyp_ID = model.activitySeqGroupRfiId.toString()
+                user_id = RfiDatabase.userId
             })
         }
         return list
@@ -97,6 +101,7 @@ object ConverterModel {
                 Node_id = selectedNodeId
                 FK_Checklist_ID = model.checklistRfiId.toString()
                 GRP_Sequence_tint = model.groupSequence.toString()
+                user_id = RfiDatabase.userId
             })
         }
         return list
@@ -112,6 +117,7 @@ object ConverterModel {
                 FK_Bldg_ID = model.structureId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
                 Floor_Scheme_ID = model.projectId.toString()
+                user_id = RfiDatabase.userId
 
             })
         }
@@ -128,7 +134,7 @@ object ConverterModel {
                 Fk_Floor_ID = (model.stageId?:0).toString()
                 Unit_Scheme_id = model.projectId.toString()
                 FK_WorkTyp_ID = model.activitySequenceGroupRfiId.toString()
-
+                user_id = RfiDatabase.userId
             })
         }
         return list
@@ -144,7 +150,7 @@ object ConverterModel {
                 fkUnitId = model.unitId.toString()
                 fkWorkTypId = model.activitySequenceGroupRfiId.toString()
                 subUnitSchemeId = model.projectId.toString()
-
+                userId = RfiDatabase.userId
             })
         }
         return list
@@ -167,6 +173,7 @@ object ConverterModel {
                 structureId = model.structureRfiId
                 clientId = model.clientId
                 projectId = model.projectId
+                userId = RfiDatabase.userId.toInt()
             })
         }
         return list

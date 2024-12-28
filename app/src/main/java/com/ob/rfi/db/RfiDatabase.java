@@ -479,7 +479,7 @@ public class RfiDatabase {
 
 
 			db.execSQL("CREATE TABLE allocateTask(_id integer primary key AUTOINCREMENT,clientId integer,projectId integer,workTypeId integer,structureId integer,stageId integer," +
-					"unitId integer,subUnitId integer,checkListId integer,groupId integer,activitySequenceId integer,userId integer)");
+					"unitId integer,subUnitId Text,checkListId integer,groupId integer,activitySequenceId integer,userId integer)");
 
 
 			db.execSQL("CREATE TABLE RfiNotification (notifId INTEGER PRIMARY KEY AUTOINCREMENT, notifText TEXT,user_id TEXT)");

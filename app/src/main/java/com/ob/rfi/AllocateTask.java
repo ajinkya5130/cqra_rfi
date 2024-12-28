@@ -190,7 +190,7 @@ public class AllocateTask extends CustomTitle {
                         model.setGroupId(Integer.parseInt(db.selectedGroupId));
                         model.setUnitId(Integer.parseInt(db.selectedUnitId));
                         model.setActivitySequenceId(Integer.parseInt(db.selectedNodeId));
-                        model.setSubUnitId(Integer.parseInt(db.selectedSubUnitId));
+                        model.setSubUnitId(db.selectedSubUnitId);
                         model.setUserId(Integer.parseInt(db.userId));
                         viewModel.insertAllocateTask(model);
                     }
@@ -286,12 +286,12 @@ public class AllocateTask extends CustomTitle {
                     Log.d(TAG, "onCreate: getLvProjectData: "+value);
 
                     if (value!=0){
-                        Log.d(TAG, "observerData: setSchemeSpinnerData");
+                        Log.d(TAG, "observerData: getLvProjectData");
                         hideProgressDialog();
                         setSchemeSpinnerData();
                     }else {
                         //updateData();
-                        Log.d(TAG, "observerData: getLvProjectData ");
+                        Log.d(TAG, "observerData: getLvProjectData with no data ");
                         showProgressDialogWithoutMessage();
                         viewModel.getProjectApi(31, "Maker");
                     }
@@ -601,7 +601,7 @@ public class AllocateTask extends CustomTitle {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         clintSpin.setAdapter(adapter);
-        clintSpin.setSelection(2);//changed by pramod
+        //clintSpin.setSelection(2);//changed by pramod
         adapter.notifyDataSetChanged();
         clintSpin.setOnItemSelectedListener(new OnItemSelectedListener() {
 
@@ -904,6 +904,7 @@ public class AllocateTask extends CustomTitle {
             items[i] = list.get(i).getSubUnitName();
         }
         final List<String> selectedItems = Arrays.asList(items);
+        final List<String> ids = Arrays.asList(subunitId);
         subunitspin.setOnClickListener(view -> {
 
             // initialise the alert dialog builder
@@ -924,24 +925,32 @@ public class AllocateTask extends CustomTitle {
             // handle the positive button of the dialog
             builder.setPositiveButton("Done", (dialog, which) -> {
                 StringBuilder stringBuilder = new StringBuilder();
+                StringBuilder subUnitIds = new StringBuilder();
                 for (int i = 0; i < checkedItems.length; i++) {
                     if (checkedItems[i]) {
                         Log.d(TAG, "setSubUnitSpinnerData: "+(selectedItems.get(i)));
                         stringBuilder.append(selectedItems.get(i));
+                        subUnitIds.append(ids.get(i));
                         stringBuilder.append(", ");
+                        subUnitIds.append(",");
                     }
                 }
                 if (checkedItems.length > 0){
                     Log.d(TAG, "b4 setSubUnitSpinnerData: stringBuilder: "+ stringBuilder);
                     if (!stringBuilder.toString().isEmpty()){
                         stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
-                        Log.d(TAG, "after setSubUnitSpinnerData: stringBuilder: "+ stringBuilder);
+                        subUnitIds.delete(subUnitIds.length() - 1, subUnitIds.length());
                         subunitspin.setText(stringBuilder.toString());
+                        RfiDatabase.selectedSubUnitId = subUnitIds.toString();
+                        Log.d(TAG, "after setSubUnitSpinnerData: stringBuilder: "+ stringBuilder+ " subUnitIds: "+subUnitIds);
+
                     }else {
+                        RfiDatabase.selectedSubUnitId = "";
                         subunitspin.setText("Select Sub Unit");
                     }
 
                 }else {
+                    RfiDatabase.selectedSubUnitId = "";
                     subunitspin.setText("Select Sub Unit");
                 }
             });
@@ -952,6 +961,7 @@ public class AllocateTask extends CustomTitle {
             // handle the neutral button of the dialog to clear the selected items boolean checkedItem
             builder.setNeutralButton("CLEAR ALL", (dialog, which) -> {
                 Arrays.fill(checkedItems, false);
+                RfiDatabase.selectedSubUnitId = "";
                 subunitspin.setText("Select Sub Unit");
             });
 
