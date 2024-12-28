@@ -2,13 +2,13 @@ package com.ob.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import com.ob.database.db_tables.AllocateTaskTableModel
 import com.ob.database.db_tables.BuildingAllocateTaskModel
 import com.ob.database.db_tables.CheckListAllocateTaskModel
 import com.ob.database.db_tables.ClientAllocateTaskModel
 import com.ob.database.db_tables.FloorAllocateTaskModel
 import com.ob.database.db_tables.GroupListAllocateTaskModel
 import com.ob.database.db_tables.ProjectAllocateTaskModel
-import com.ob.database.db_tables.SubUnitAllocateTaskModel
 import com.ob.database.db_tables.UnitAllocateTaskModel
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel
 
@@ -33,8 +33,11 @@ interface ClientAllocateTaskDao {
     @Query("SELECT distinct(u.Unit_ID) as unitId, u.Unit_Des as unitName FROM allocateTask as a JOIN Unit as u where u.Unit_ID = a.unitId and u.Fk_Floor_ID =:floorId and u.Unit_Scheme_id =:schemaOrProjectId")
     suspend fun getUnitAllocateData(floorId:String,schemaOrProjectId:String): List<UnitAllocateTaskModel>
 
-    @Query("SELECT distinct(s.Sub_Unit_ID) as subUnitId, s.Sub_Unit_Des as subUnitName FROM allocateTask as a JOIN SubUnit as s where s.Sub_Unit_ID = a.subUnitId and s.Sub_Unit_Scheme_id =:schemaOrProjectId and s.FK_Unit_ID in (:unitId)")
-    suspend fun getSubUnitAllocateData(schemaOrProjectId:String,unitId:String): List<SubUnitAllocateTaskModel>
+    @Query("SELECT * FROM allocateTask where projectId =:schemaOrProjectId and unitId in (:unitId) and groupId =:groupId")
+    suspend fun getAllocateData(schemaOrProjectId:String,unitId:String,groupId:Int): AllocateTaskTableModel
+
+    /*@Query("SELECT Sub_Unit_Des,Sub_Unit_ID FROM SubUnit WHERE Sub_Unit_Id in (:subUnits) GROUP by Sub_Unit_Id")
+    suspend fun getSubUnitDataFromDB(subUnits:String): List<SubUnitTableModel>*/
 
     @Query("SELECT distinct(c.Checklist_ID) as checkListId, c.CheckList_Name as checkListName FROM allocateTask as a JOIN CheckList as c where c.Checklist_ID = a.checkListId and c.FK_WorkTyp_ID =:workTypeId")
     suspend fun getCheckListAllocateData(workTypeId:String): List<CheckListAllocateTaskModel>

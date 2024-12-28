@@ -15,11 +15,12 @@ import com.ob.database.db_tables.FloorAllocateTaskModel
 import com.ob.database.db_tables.GroupListAllocateTaskModel
 import com.ob.database.db_tables.ProjectAllocateTaskModel
 import com.ob.database.db_tables.QuestionsTableModel
-import com.ob.database.db_tables.SubUnitAllocateTaskModel
+import com.ob.database.db_tables.SubUnitTableModel
 import com.ob.database.db_tables.UnitAllocateTaskModel
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel
 import com.ob.rfi.CustomTitle
 import com.ob.rfi.db.RfiDatabase
+import com.ob.rfi.db.RfiDatabase.selectedGroupId
 import com.ob.rfi.db.RfiDatabase.selectedSchemeId
 import com.ob.rfi.db.RfiDatabase.selectedUnitId
 import com.ob.rfi.db.RfiDatabase.selectedWorkTypeId
@@ -72,7 +73,7 @@ class SelectQuestionViewModel: ViewModel() {
     var listOfBuildingAllocateTaskModel = arrayListOf<BuildingAllocateTaskModel>()
     var listOfFloorAllocateTaskModel = arrayListOf<FloorAllocateTaskModel>()
     var listOfUnitAllocateTaskModel = arrayListOf<UnitAllocateTaskModel>()
-    var listOfSubUnitAllocateTaskModel = arrayListOf<SubUnitAllocateTaskModel>()
+    var listOfSubUnitAllocateTaskModel = arrayListOf<SubUnitTableModel>()
     var listOfCheckListAllocateTaskModel = arrayListOf<CheckListAllocateTaskModel>()
     var listOfGroupListAllocateTaskModel = arrayListOf<GroupListAllocateTaskModel>()
     init {
@@ -229,7 +230,7 @@ class SelectQuestionViewModel: ViewModel() {
                     )
                 }
                 val count = listOfFloorAllocateTaskModel.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
+                Log.d(TAG, "${RFIRoomDb.TAG} - getFloorDataFromDB: count: $count ")
                 _lvFloorAllocateData.postValue(count)
             } catch (e: Exception) {
                 _lvErrorData.postValue(
@@ -238,7 +239,7 @@ class SelectQuestionViewModel: ViewModel() {
                         spinnerType = SpinnerType.STRUCTURE
                     )
                 )
-                Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
+                Log.e(TAG, "${RFIRoomDb.TAG} - getFloorDataFromDB: Exception: ", e)
             }
         }
     }
@@ -256,7 +257,7 @@ class SelectQuestionViewModel: ViewModel() {
                     )
                 }
                 val count = listOfUnitAllocateTaskModel.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
+                Log.d(TAG, "${RFIRoomDb.TAG} - getUnitDataFromDB: count: $count ")
                 _lvUnitAllocateData.postValue(count)
             } catch (e: Exception) {
                 _lvErrorData.postValue(
@@ -265,7 +266,7 @@ class SelectQuestionViewModel: ViewModel() {
                         spinnerType = SpinnerType.UNIT_LIST
                     )
                 )
-                Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
+                Log.e(TAG, "${RFIRoomDb.TAG} - getUnitDataFromDB: Exception: ", e)
             }
         }
     }
@@ -273,13 +274,40 @@ class SelectQuestionViewModel: ViewModel() {
     fun getSubUnitAllocateDataFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val selectedGroupId = if (selectedGroupId.isEmpty()) 0 else selectedGroupId.toInt()
+              val listOfAllocateTaskModel =
+                    CustomTitle.rfiDB.clientAllocateTaskDao().getAllocateData(
+                        selectedSchemeId,selectedUnitId,selectedGroupId)
+                if (listOfAllocateTaskModel.subUnitId.isEmpty()){
+                    _lvSubUnitAllocateData.postValue(0)
+                }else{
+                    getLatestSubUnitAllocateDataFromDB(listOfAllocateTaskModel.subUnitId)
+                }
+                Log.d(TAG, "${RFIRoomDb.TAG} - getSubUnitAllocateDataFromDB: $listOfAllocateTaskModel ")
+            } catch (e: Exception) {
+                _lvErrorData.postValue(
+                    APIErrorModel(
+                        message = "Something is wrong while fetching Data, Please try again!, ${e.message}",
+                        spinnerType = SpinnerType.SUB_UNIT_LIST
+                    )
+                )
+                Log.e(TAG, "${RFIRoomDb.TAG} - getSubUnitAllocateDataFromDB: Exception: ", e)
+            }
+        }
+    }
+
+    private fun getLatestSubUnitAllocateDataFromDB(subUnitId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                //val input = "1,2,3,4"
+                val list = subUnitId.split(",").map { it.trim()} // Convert to List<Int>
+                Log.d(TAG, "getLatestSubUnitAllocateDataFromDB: list: $list")
                 listOfSubUnitAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getSubUnitAllocateData(
-                        selectedSchemeId,selectedUnitId) as ArrayList<SubUnitAllocateTaskModel>
+                    CustomTitle.rfiDB.subUnitDao().getSubUnitDataFromDB(list) as ArrayList<SubUnitTableModel>
                 if (listOfSubUnitAllocateTaskModel.size != 0) {
                     listOfSubUnitAllocateTaskModel.add(
                         0,
-                        SubUnitAllocateTaskModel(subUnitName = "Select Data", subUnitId = NO_DATA_AVAILABLE_VAL.toInt())
+                        SubUnitTableModel(subUnitName = "Select Data", subUnitId = NO_DATA_AVAILABLE_VAL)
                     )
                 }
                 val count = listOfSubUnitAllocateTaskModel.size
@@ -310,7 +338,7 @@ class SelectQuestionViewModel: ViewModel() {
                     )
                 }
                 val count = listOfCheckListAllocateTaskModel.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
+                Log.d(TAG, "${RFIRoomDb.TAG} - getCheckListAllocateDataFromDB: count: $count ")
                 _lvCheckListAllocateData.postValue(count)
             } catch (e: Exception) {
                 _lvErrorData.postValue(
@@ -319,7 +347,7 @@ class SelectQuestionViewModel: ViewModel() {
                         spinnerType = SpinnerType.CHECK_LIST
                     )
                 )
-                Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
+                Log.e(TAG, "${RFIRoomDb.TAG} - getCheckListAllocateDataFromDB: Exception: ", e)
             }
         }
     }
@@ -337,7 +365,7 @@ class SelectQuestionViewModel: ViewModel() {
                     )
                 }
                 val count = listOfGroupListAllocateTaskModel.size
-                Log.d(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: count: $count ")
+                Log.d(TAG, "${RFIRoomDb.TAG} - getGroupAllocateDataFromDB: count: $count ")
                 _lvGroupListAllocateData.postValue(count)
             } catch (e: Exception) {
                 _lvErrorData.postValue(
@@ -346,7 +374,7 @@ class SelectQuestionViewModel: ViewModel() {
                         spinnerType = SpinnerType.GROUP_LIST
                     )
                 )
-                Log.e(TAG, "${RFIRoomDb.TAG} - getBuildingDataFromDB: Exception: ", e)
+                Log.e(TAG, "${RFIRoomDb.TAG} - getGroupAllocateDataFromDB: Exception: ", e)
             }
         }
     }
@@ -374,16 +402,20 @@ class SelectQuestionViewModel: ViewModel() {
 
     fun checkIsQuestionAvailable() {
         viewModelScope.launch(Dispatchers.IO) {
-            listOfQuestions =
-                CustomTitle.rfiDB.questionsDao().getQuestionOnChecklistId(
-                    RfiDatabase.selectedChecklistId.toInt(),
-                    RfiDatabase.selectedBuildingId.toInt(),
-                    RfiDatabase.selectedGroupId.toInt()
-                ) as ArrayList<QuestionsTableModel>
+            try {
+                listOfQuestions =
+                    CustomTitle.rfiDB.questionsDao().getQuestionOnChecklistId(
+                        RfiDatabase.selectedChecklistId.toInt(),
+                        RfiDatabase.selectedBuildingId.toInt(),
+                        RfiDatabase.selectedGroupId.toInt()
+                    ) as ArrayList<QuestionsTableModel>
 
-            val count = listOfQuestions.size
-            Log.d(TAG, "${RFIRoomDb.TAG} - listOfQuestions: count: $count ")
-            _lvQuestionsData.postValue(count)
+                val count = listOfQuestions.size
+                Log.d(TAG, "${RFIRoomDb.TAG} - listOfQuestions: count: $count ")
+                _lvQuestionsData.postValue(count)
+            } catch (e: Exception) {
+                Log.e(TAG, "checkIsQuestionAvailable: Exception: ", e)
+            }
         }
 
     }

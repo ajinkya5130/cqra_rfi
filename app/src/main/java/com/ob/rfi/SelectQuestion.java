@@ -35,7 +35,7 @@ import com.ob.database.db_tables.ClientAllocateTaskModel;
 import com.ob.database.db_tables.FloorAllocateTaskModel;
 import com.ob.database.db_tables.GroupListAllocateTaskModel;
 import com.ob.database.db_tables.ProjectAllocateTaskModel;
-import com.ob.database.db_tables.SubUnitAllocateTaskModel;
+import com.ob.database.db_tables.SubUnitTableModel;
 import com.ob.database.db_tables.UnitAllocateTaskModel;
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel;
 import com.ob.rfi.db.RfiDatabase;
@@ -287,7 +287,7 @@ public class SelectQuestion extends CustomTitle {
                     if (value != 0) {
                         setUnitSpinnerData();
                     } else {
-                        viewModel.getCheckListAllocateDataFromDB();
+                        displayErrorDialog("Error", "No Data");
                         unitSpin.setVisibility(View.GONE);
                     }
                 }
@@ -298,10 +298,9 @@ public class SelectQuestion extends CustomTitle {
 
                     if (value != 0) {
                         setSubUnitSpinnerData();
-                    } else {
-                        viewModel.getCheckListAllocateDataFromDB();
-                       // subunitspin.setVisibility(View.GONE);
-                        //displayErrorDialog("Error","No Data");
+                    }else {
+                        subunitspin.setText("Select Sub Unit");
+                        displayErrorDialog("Error", "No Data");
                     }
                 }
         );
@@ -424,38 +423,6 @@ public class SelectQuestion extends CustomTitle {
     private void setClientData() {
 
         insertFlag = false;
-        /***** AKSHAY SHAH *****/
-        //CHANGES MADE ON 13-MAY-2015
-	/*	String where = "user_id='" + db.userId + "'";
-
-		// Client_ID TEXT,Clnt_Name TEXT,CL_Dispaly_Name TEXT
-
-		System.out.println("cleint where -==========>" + where);
-		Cursor cursor = db.select("Client as ct",
-				"distinct(ct.Client_ID),ct.Clnt_Name", where, null, null, null,
-				null);
-
-		clientId = new String[cursor.getCount()];
-		client = new String[cursor.getCount() + 1];
-
-		client[0] = "--select--";
-
-		if (cursor.moveToFirst()) {
-
-			do {
-				System.out.println("nnnnnnnnnnnnnnn");
-				clientId[cursor.getPosition()] = cursor.getString(0);
-				client[cursor.getPosition() + 1] = cursor.getString(1);
-			} while (cursor.moveToNext());
-		} else {
-			client[0] = "Client not allocated";
-
-		}
-
-		if (cursor != null && !cursor.isClosed()) {
-
-			cursor.close();
-		}		*/
 
         ArrayList<ClientAllocateTaskModel> list = viewModel.getListOfClientAllocateTaskModel();
         int size = list.size();
@@ -569,6 +536,9 @@ public class SelectQuestion extends CustomTitle {
                     structureSpin.setSelection(0);
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
+                    db.selectedUnitId = "";
+                    db.selectedSubUnitId = "";
+                    subunitspin.setText("Select Sub Unit");
 
                 }
             }
@@ -605,6 +575,7 @@ public class SelectQuestion extends CustomTitle {
                     // db.selectedSchemeName=projSpin.getSelectedItem().toString();
                     System.out.println("db.selectedWorkTypeId : "
                             + db.selectedWorkTypeId);
+                    viewModel.getCheckListAllocateDataFromDB();
                     viewModel.getBuildingDataFromDB();
                     //setBulidngSpinnerData();
                     structureSpin.setClickable(true);
@@ -626,6 +597,9 @@ public class SelectQuestion extends CustomTitle {
                     structureSpin.setSelection(0);
                     checklistspin.setClickable(false);
                     checklistspin.setSelection(0);
+                    db.selectedUnitId = "";
+                    db.selectedSubUnitId = "";
+                    subunitspin.setText("Select Sub Unit");
 
                 }
             }
@@ -661,8 +635,8 @@ public class SelectQuestion extends CustomTitle {
                     viewModel.getFloorDataFromDB();
 
 //                    setFloorSpinnerData(buildingID[position - 1], schemeid);
-                    stageSpin.setClickable(true);
-                    stageSpin.setSelection(0);
+                    /*stageSpin.setClickable(true);
+                    stageSpin.setSelection(0);*/
 
                 } else {
                     stageSpin.setClickable(false);
@@ -674,7 +648,6 @@ public class SelectQuestion extends CustomTitle {
                     checklistspin.setSelection(0);
 
                     db.selectedBuildingId = "";
-                    db.selectedChecklistId = "";
                     db.selectedSubGroupId = "";
                     db.selectedFloorId = "";
                     db.selectedUnitId = "";
@@ -715,32 +688,17 @@ public class SelectQuestion extends CustomTitle {
                     db.selectedFloorId = floorID[position].toString();
                     db.selectedNodeId = floorID[position].toString();
                     viewModel.getUnitDataFromDB();
-                    /*
-                    Cursor cursor = db.select("Unit u, AllocateTask a", "distinct(u.Unit_Des),u.Unit_ID", "u.Unit_ID = a.Unit AND u.Fk_Floor_ID = '" + db.selectedFloorId + "' AND u.Unit_Scheme_ID = '" + db.selectedSchemeId + "'", null, null, null, null);
-                    String[] unitName = new String[cursor.getCount() + 1];
-                    if (cursor.getCount() > 0) {
-                        setUnitSpinnerData(db.selectedFloorId, db.selectedSchemeId);
-                        unitSpin.setClickable(true);
-                        unitSpin.setSelection(0);
-                    } else {
-                        setCheckListSpinnerData();
-                        checklistspin.setClickable(true);
-                        checklistspin.setSelection(0);
-                    }*/
                 } else {
                     unitSpin.setClickable(false);
                     unitSpin.setSelection(0);
                     subunitspin.setText("");
-                    checklistspin.setClickable(false);
-                    checklistspin.setSelection(0);
+                    /*checklistspin.setClickable(false);
+                    checklistspin.setSelection(0);*/
 
-                    db.selectedChecklistId = "";
                     db.selectedSubGroupId = "";
                     db.selectedFloorId = "";
                     db.selectedUnitId = "";
                     db.selectedSubUnitId = "";
-                    db.selectedElementId = "";
-                    db.selectedSubElementId = "";
 
                 }
             }
@@ -777,21 +735,16 @@ public class SelectQuestion extends CustomTitle {
             public void onItemSelected(AdapterView<?> aview, View view,
                                        int position, long rowid) {
                 if (position > 0) {
+                    subunitspin.setText("Select Sub Unit");
                     db.selectedUnitId = unitID[position].toString();
                     db.selectedNodeId = unitID[position].toString();
                     coverageedit.setText(unitName[position]);
                     viewModel.getSubUnitAllocateDataFromDB();
                 } else {
                     subunitspin.setText("");
-                    checklistspin.setClickable(false);
-                    checklistspin.setSelection(0);
-
-                    db.selectedChecklistId = "";
-                    db.selectedSubGroupId = "";
-                    db.selectedUnitId = "";
-                    db.selectedSubUnitId = "";
-                    db.selectedElementId = "";
-                    db.selectedSubElementId = "";
+                    /*checklistspin.setClickable(false);
+                    checklistspin.setSelection(0);*/
+                    subunitspin.setText("Select Sub Unit");
                 }
             }
 
@@ -842,14 +795,14 @@ public class SelectQuestion extends CustomTitle {
 
     private void setSubUnitSpinnerData() {
 
-        ArrayList<SubUnitAllocateTaskModel> list = viewModel.getListOfSubUnitAllocateTaskModel();
+        ArrayList<SubUnitTableModel> list = viewModel.getListOfSubUnitAllocateTaskModel();
         int size = list.size();
         final Integer[] subUnitID = new Integer[size];
         String[] subUnitName = new String[size];
         for (int i = 0; i < size; i++) {
-            SubUnitAllocateTaskModel model = list.get(i);
+            SubUnitTableModel model = list.get(i);
             subUnitName[i] = model.getSubUnitName();
-            subUnitID[i] = model.getSubUnitId();
+            subUnitID[i] = Integer.parseInt(model.getSubUnitId());
         }
         if (size == 0) {
             checklistspin.setClickable(true);
@@ -1082,84 +1035,15 @@ public class SelectQuestion extends CustomTitle {
                             + db.selectedGroupId);
 
                     db.selectedGroupName = groupName[position];
-                    //coverageData();
-
-                    System.out.println("selected group===" + db.selectedGroupId);
-                    /*if (isSelectedGroupSequenceOne(db.selectedGroupId)) {
-                        if (isCoverageSpinner) {
-                            isCoverageSpinner = false;
-                            isCoverageTextViewNew = true;
-                            System.out.println("In group sequence = 1 block");
-                            View change = (View) findViewById(R.id.coverage_id_spinner);
-                            ViewGroup parent = (ViewGroup) change.getParent();
-                            int index = parent.indexOfChild(change);
-                            parent.removeView(change);
-                            LayoutInflater inflater = getLayoutInflater();
-                            change = inflater.inflate(
-                                    R.layout.select_question_coverage_textview,
-                                    parent, false);
-                            parent.addView(change, index);
-                            coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-                            //coverageedit=coverageedit.replace("\n", "").replace("\r", "");
-                        } else {
-                            if (isCoverageTextViewNew) {
-                                coverageedit = (EditText) findViewById(R.id.coverage_id_edittext);
-                                isCoverageSpinner = false;
-                            } else {
-                                coverageedit = (EditText) findViewById(R.id.coverage_id);
-                                isCoverageSpinner = false;
-                            }
-                        }
-                        System.out.println("Enter Coverage Manually!!!");
-                    }*/
                 } else {
                     db.selectedGroupId = "";
                     System.out.println("else..................");
                 }
             }
 
-            public boolean isSelectedGroupSequenceOne(String userSelectedGroupID) {
-				/*
-				String columns1 = "min(GRP_Sequence_tint)";
-				//String where1 = "Grp_ID = '" + userSelectedGroupID + "'";
-				Cursor cursor1 = db.select("Group1", columns1, null, null, null,
-						null, null);
-				String group_id_req=cursor1.getString(cursor1
-						.getColumnIndex("GRP_Sequence_tint"));
-				if(group_id_req<userSelectedGroupID)*/
-                String columns = "GRP_Sequence_tint";
-                String where = "Grp_ID = '" + userSelectedGroupID + "'";
-                Cursor cursor = db.select("Group1", columns, where, null, null,
-                        null, null);
-                if (cursor.moveToFirst()) {
-                    String value = cursor.getString(cursor
-                            .getColumnIndex("GRP_Sequence_tint"));
-
-                    System.out.println("selected sequesnce byPramod " + value);
-                    if (value.equalsIgnoreCase("1")) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    System.out.println("Cusror Count Pramod : " + cursor.getCount());
-                    return false;
-                }
-            }
-
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
-
-        if (isGroup && groupName.length > 0) {
-            grouptspin.setVisibility(View.VISIBLE);
-
-
-        } else {
-            grouptspin.setVisibility(View.VISIBLE);
-        }
-
-
     }
 
     @Override
