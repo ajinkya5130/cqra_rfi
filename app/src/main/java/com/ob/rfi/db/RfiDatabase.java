@@ -138,8 +138,8 @@ public class RfiDatabase {
 
 	public RfiDatabase(Context context) {
 		this.context = context;
-		openHelper openHelper = new openHelper(this.context);
-		this.db = openHelper.getWritableDatabase();
+		/*openHelper openHelper = new openHelper(this.context);
+		this.db = openHelper.getWritableDatabase();*/
 	}
 
 	public long insert(String TABLE_NAME, String TABLE_FIELDS,

@@ -15,6 +15,8 @@ import com.ob.database.dao.ClientAllocateTaskDao
 import com.ob.database.dao.ClientDao
 import com.ob.database.dao.CreateRFITableDao
 import com.ob.database.dao.GroupListDao
+import com.ob.database.dao.LoginUserDao
+import com.ob.database.dao.NodeUserDetailsDao
 import com.ob.database.dao.ProjectDao
 import com.ob.database.dao.QuestionsDao
 import com.ob.database.dao.StageDao
@@ -28,6 +30,8 @@ import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.CreateRFITableModel
 import com.ob.database.db_tables.GroupListTableModel
+import com.ob.database.db_tables.LoginUserTableModel
+import com.ob.database.db_tables.NodeUserTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.StageTableModel
@@ -52,6 +56,8 @@ import java.util.concurrent.Executors
     AllocateTaskTableModel::class,
     CreateRFITableModel::class,
     AnswerTableModel::class,
+    NodeUserTableModel::class,
+    LoginUserTableModel::class,
                      ],
     version = 1,
     exportSchema = true/*,
@@ -59,8 +65,10 @@ import java.util.concurrent.Executors
         AutoMigration (from = 13, to = 14)
     ]*/)
 abstract class RFIRoomDb : RoomDatabase() {
+    abstract fun loginUserDao(): LoginUserDao
     abstract fun clientDao(): ClientDao
     abstract fun projectDao(): ProjectDao
+    abstract fun nodeUserDetailsDao(): NodeUserDetailsDao
     abstract fun workTypeDao(): WorkTypeDao
     abstract fun checkListDao(): CheckListDao
     abstract fun groupListDao(): GroupListDao
@@ -82,7 +90,7 @@ abstract class RFIRoomDb : RoomDatabase() {
         fun getDatabase(context: Context): RFIRoomDb {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(context.applicationContext, RFIRoomDb::class.java, "RFI.db")
-                    .openHelperFactory(ExistingDatabaseOpenHelperFactory(context, "RFI.db"))
+                    //.openHelperFactory(ExistingDatabaseOpenHelperFactory(context, "RFI.db"))
                     .setQueryCallback({
                             sqlQuery, bindArgs ->
                         Log.i(TAG, "SQL Query: $sqlQuery SQL Args: $bindArgs")

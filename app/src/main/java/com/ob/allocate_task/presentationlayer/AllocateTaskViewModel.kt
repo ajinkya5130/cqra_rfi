@@ -175,13 +175,15 @@ class AllocateTaskViewModel : ViewModel() {
                         _lvProjectData.postValue(1)
                     } else {
                         val dbModel = ConverterModel.convertProjectData(it[0].project)
+                        val nodeDbModel = ConverterModel.convertNodeData(it[0].nodeUserDetail)
                         CustomTitle.rfiDB.projectDao().insert(dbModel)
+                        CustomTitle.rfiDB.nodeUserDetailsDao().insert(nodeDbModel)
                         getProjectDataFromDB()
                     }
                 }
 
             } else {
-                Log.e(TAG, "getProjectApi: response: ${response.errorBody()}")
+                Log.e(TAG, "getProjectApi: response error: ${response.errorBody()}")
                 response.errorBody()?.let {
                     val value = it.string()
                     Log.e(TAG, "getProjectApi: Error response: $value")

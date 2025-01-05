@@ -13,7 +13,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,7 +36,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.ob.database.db_tables.LoginUserTableModel;
 import com.ob.rfi.db.RfiDatabase;
+import com.ob.rfi.models.SignInResponseModel;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
 import com.ob.rfi.viewmodels.LoginSealedClass;
@@ -160,13 +161,20 @@ public class LoginScreen extends CustomTitle {
 
 	private void handleFlowData() {
 		viewModel.getFlowModel().observe(this, loginSealedClass -> {
-			if (loginSealedClass instanceof Success<?>){
-				Log.d(TAG, "Success handleFlowData: "+loginSealedClass);
-				hideProgressDialog();
-				finish();
-				Intent i =new Intent(LoginScreen.this , HomeScreen.class);
-				i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-				startActivity(i);
+			if (loginSealedClass instanceof Success<?> successInstance){
+                Object successModel = successInstance.getSuccessModel(); // Access the success model
+
+				if (successModel instanceof SignInResponseModel user) { // Assuming successModel contains a UserModel
+					Log.d(TAG, "Success handleFlowData SignInResponseModel: "+user);
+					openHomeScreen();
+				}else if (successModel instanceof LoginUserTableModel loginModel){
+					Log.d(TAG, "Success handleFlowData LoginUserTableModel: "+loginModel);
+					if (network_available){
+						viewModel.getSignInApi();
+					}else {
+						openHomeScreen();
+					}
+				}
 			}
 			if (loginSealedClass instanceof Failure<?>){
 				hideProgressDialog();
@@ -189,6 +197,14 @@ public class LoginScreen extends CustomTitle {
 				Log.d(TAG, "Message handleFlowData: "+me);
 			}
         });
+	}
+
+	private void openHomeScreen() {
+		hideProgressDialog();
+		finish();
+		Intent i =new Intent(LoginScreen.this , HomeScreen.class);
+		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		startActivity(i);
 	}
 
 
@@ -242,8 +258,11 @@ public class LoginScreen extends CustomTitle {
 			System.out.println("after call webservice-------------");
 			//System.out.println(url);
 		} else {
+			LoginUserTableModel model = new LoginUserTableModel();
+			model.setLoginUserName(usernameText);
+			viewModel.getLoginUserData(model,false);
 
-			Cursor cursor = db.select("userMaster",	"Pk_User_ID,User_Name,Password", null, null, null, null, null);
+			/*Cursor cursor = db.select("userMaster",	"Pk_User_ID,User_Name,Password", null, null, null, null, null);
 			if (cursor.moveToFirst()) {
 				do {
 					System.out.println("before check");
@@ -279,7 +298,7 @@ public class LoginScreen extends CustomTitle {
 
 			if (!isRecordFound) {
 				displayDialog("Error", "No network connection.");
-			}
+			}*/
 		}
 	}
 
@@ -380,7 +399,15 @@ public class LoginScreen extends CustomTitle {
 				displayDialog(2,"Error", "Device Date does not match Server Date ");
 			} else {
 				System.out.println("user role =="+userRole+"new userrole="+b[7]+"dashboard roll=="+dashboardroll);
-				Cursor cursor = db.select("userMaster", "User_Name", null, null,
+				LoginUserTableModel model = new LoginUserTableModel();
+				model.setLoginUserName(usernameText);
+				model.setPkLoginUserId(Integer.parseInt(db.userId));
+				model.setLoginUserPassword(passwordText);
+				model.setLoginUserRole(userRole);
+				boolean dashboardRollBool = dashboardroll.equalsIgnoreCase("True");
+				model.setDashboardRole(dashboardRollBool);
+				viewModel.getLoginUserData(model, true);
+				/*Cursor cursor = db.select("userMaster", "User_Name", null, null,
 						null, null, "pk_user_id");
 
 				boolean recordFound = false;
@@ -407,8 +434,8 @@ public class LoginScreen extends CustomTitle {
 
 				db.justLogged = true;
 
-				db.closeDb();
-				viewModel.getSignInApi();
+				db.closeDb();*/
+				//viewModel.getSignInApi();
 				/*finish();
 				Intent i =new Intent(LoginScreen.this , HomeScreen.class);
 				i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -571,14 +598,6 @@ public class LoginScreen extends CustomTitle {
 		editor.commit();
 		System.out.println("save pref--------------------");
 
-	}
-
-	@Override
-	protected void onDestroy() {
-		if(db!=null){
-			db.closeDb();
-		}
-		super.onDestroy();
 	}
 
 

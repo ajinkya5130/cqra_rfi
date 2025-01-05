@@ -3,6 +3,7 @@ package com.ob.rfi.api
 import com.ob.database.db_tables.ChecklistTableModel
 import com.ob.database.db_tables.ClientTableModel
 import com.ob.database.db_tables.GroupListTableModel
+import com.ob.database.db_tables.NodeUserTableModel
 import com.ob.database.db_tables.ProjectTableModel
 import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.StageTableModel
@@ -14,6 +15,7 @@ import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.models.ChecklistApiResponseModelItem
 import com.ob.rfi.models.ClientApiResponseModelItem
 import com.ob.rfi.models.GroupListApiResponseModelItem
+import com.ob.rfi.models.NodeUserDetail
 import com.ob.rfi.models.Project
 import com.ob.rfi.models.QuestionsApiResponseModelItem
 import com.ob.rfi.models.StageApiResponseModelItem
@@ -47,6 +49,22 @@ object ConverterModel {
             //scrolling_status = model.prjScrollinguistatus
         }
         return projModel
+    }
+    fun convertNodeData(model:NodeUserDetail): NodeUserTableModel{
+        val nodeModel = NodeUserTableModel().apply {
+            checkerRepId = model.nodeUserCheckerReprId
+            checkerUserType = model.nodeUserCheckerUserType
+            approverRepId = model.nodeUserApproverReprId
+            approverUserType = model.nodeUserApproverUserType
+            checker2RepId = model.nodeUserChecker2ReprId
+            checker2UserType = model.nodeUserChecker2UserType
+            checker3RepId = model.nodeUserChecker3ReprId
+            checker3UserType = model.nodeUserChecker3UserType
+            makerRepId = model.nodeUserMkrReprId
+            makerUserType = model.nodeUserMkrUserType
+            contractorId = model.nodeUserContractorId
+        }
+        return nodeModel
     }
 
     fun convertWorkTypeModel(listOfWorkType: ArrayList<WorkTypeResponseModelItem>): List<WorkTypeTableModel> {

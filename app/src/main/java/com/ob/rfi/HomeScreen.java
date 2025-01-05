@@ -35,10 +35,14 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.ob.database.db_tables.LoginUserTableModel;
 import com.ob.rfi.db.RfiDatabase;
 import com.ob.rfi.service.Webservice;
 import com.ob.rfi.service.Webservice.downloadListener;
+import com.ob.rfi.viewmodels.HomeScreenViewModel;
+import com.ob.rfi.viewmodels.LoginSealedClass;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -58,14 +62,20 @@ public class HomeScreen extends CustomTitle {
     private String[] param;
     private String[] value;
     private String rollval;
-    private String rollvaldashboard;
+    private boolean rollvaldashboard;
     private SharedPreferences checkPreferences;
     private Editor editor;
     private String roll;
+    private HomeScreenViewModel viewModel;
+    LinearLayout allocateTaskLinLayout,approverfiLinLayout,createRfiLinLayout,updaterfiLinLayout;
+    LinearLayout checkRfiLinLayout,dashboardLinLayout,logOutLinLayout;
+    Button allocateTask,startInspectButton,updaterfi,allocateUnitButton,testRfi,approve_rfi;
+
 
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(HomeScreenViewModel.class);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.home);
@@ -84,25 +94,25 @@ public class HomeScreen extends CustomTitle {
 
         db = new RfiDatabase(getApplicationContext());
 
-        checkuserRole();
+        //checkuserRole();
+        handleFlowData();
 
-
-        Button allocateTask = (Button) findViewById(R.id.allocate_task);//allocate
-        Button startInspectButton = (Button) findViewById(R.id.start_ins);//create
-        Button updaterfi = (Button) findViewById(R.id.updaterfi);//update
-        Button allocateUnitButton = (Button) findViewById(R.id.check_rfi);//check rfi
-        Button testRfi = (Button) findViewById(R.id.test_rfi);//dashboard
-        Button approve_rfi = (Button) findViewById(R.id.approve_rfi);//approve
+        allocateTask = (Button) findViewById(R.id.allocate_task);//allocate
+        startInspectButton = (Button) findViewById(R.id.start_ins);//create
+        updaterfi = (Button) findViewById(R.id.updaterfi);//update
+        allocateUnitButton = (Button) findViewById(R.id.check_rfi);//check rfi
+        testRfi = (Button) findViewById(R.id.test_rfi);//dashboard
+        approve_rfi = (Button) findViewById(R.id.approve_rfi);//approve
         ImageView notificationImageview = (ImageView) findViewById(R.id.notification_imageview);//notification icon on home page
 
-        LinearLayout approverfiLinLayout = (LinearLayout) findViewById(R.id.approve_rfi_lin_id);
+        approverfiLinLayout = (LinearLayout) findViewById(R.id.approve_rfi_lin_id);
 
-        LinearLayout allocateTaskLinLayout = (LinearLayout) findViewById(R.id.allocate_task_lin_id);
-        LinearLayout createRfiLinLayout = (LinearLayout) findViewById(R.id.create_rfi_lin_id);
-        LinearLayout updaterfiLinLayout = (LinearLayout) findViewById(R.id.update_rfi_lin_id);
-        LinearLayout checkRfiLinLayout = (LinearLayout) findViewById(R.id.check_rfi_lin_id);
-        LinearLayout dashboardLinLayout = (LinearLayout) findViewById(R.id.dashboard_lin_id);
-        LinearLayout logOutLinLayout = (LinearLayout) findViewById(R.id.log_out_lin_id);
+        allocateTaskLinLayout = (LinearLayout) findViewById(R.id.allocate_task_lin_id);
+        createRfiLinLayout = (LinearLayout) findViewById(R.id.create_rfi_lin_id);
+        updaterfiLinLayout = (LinearLayout) findViewById(R.id.update_rfi_lin_id);
+        checkRfiLinLayout = (LinearLayout) findViewById(R.id.check_rfi_lin_id);
+        dashboardLinLayout = (LinearLayout) findViewById(R.id.dashboard_lin_id);
+        logOutLinLayout = (LinearLayout) findViewById(R.id.log_out_lin_id);
 
         notificationImageview.setOnClickListener(new OnClickListener() {
             @Override
@@ -111,58 +121,6 @@ public class HomeScreen extends CustomTitle {
                 startActivity(notificationIntent);
             }
         });
-
-        System.out.println("checking value of User Roll and user ID=" + rollval + " " + db.userId);
-        try {
-            if (rollval.equalsIgnoreCase("maker")) {
-                allocateUnitButton.setEnabled(false);
-                if (isRFIavailableForUser(db.userId)) {
-                    updaterfi.setEnabled(true);
-                } else {
-                    updaterfi.setEnabled(true);
-                }
-                checkRfiLinLayout.setVisibility(View.GONE);
-                approverfiLinLayout.setVisibility(View.GONE);
-                approve_rfi.setEnabled(false);
-            } else if (rollval.equalsIgnoreCase("Approver")) {
-                allocateUnitButton.setEnabled(false);
-                updaterfi.setEnabled(false);
-                allocateTaskLinLayout.setVisibility(View.GONE);
-                updaterfiLinLayout.setVisibility(View.GONE);
-                checkRfiLinLayout.setVisibility(View.GONE);
-                createRfiLinLayout.setVisibility(View.GONE);
-                approverfiLinLayout.setVisibility(View.VISIBLE);
-                approve_rfi.setEnabled(true);
-            } else {
-                System.out.println("checking value2=" + rollval);
-                startInspectButton.setEnabled(false);
-                allocateTask.setEnabled(false);
-                updaterfi.setEnabled(false);
-                allocateTaskLinLayout.setVisibility(View.GONE);
-                createRfiLinLayout.setVisibility(View.GONE);
-                updaterfiLinLayout.setVisibility(View.GONE);
-
-                approverfiLinLayout.setVisibility(View.GONE);
-                approve_rfi.setEnabled(false);
-
-            }
-            //clearAllTableDataExceptUser();
-
-            if (rollvaldashboard.equalsIgnoreCase("true")) {    //testRfi.setVisibility(View.VISIBLE);
-                testRfi.setEnabled(true);
-                testRfi.setShadowLayer(1.5f, -1, 1, Color.GRAY);
-
-            } else {
-
-                testRfi.setEnabled(false);
-
-                //testRfi.setVisibility(View.GONE);
-            }
-            //flushData();
-
-        } catch (Exception e) {
-            System.out.println("error=" + e.getMessage());
-        }
         allocateTask.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -398,10 +356,7 @@ public class HomeScreen extends CustomTitle {
         //getOverflowMenu();
         getOverflowMenu(this);
 
-        if (db.justLogged) {
-            checkIfDataAvailable();
-            db.justLogged = false;
-        }
+        viewModel.getLoginUserData();
 
         if (db.isUploaded) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -470,8 +425,8 @@ public class HomeScreen extends CustomTitle {
         if (cursor.moveToFirst()) {
             do {
 
-                rollval = cursor.getString(0);
-                rollvaldashboard = cursor.getString(1);
+                //rollval = cursor.getString(0);
+                //rollvaldashboard = cursor.getString(1);
                 System.out.println("rollllllll=" + rollval);
                 //items[cursor.getPosition() + 1] = cursor.getString(1);
                 checkPreferences = getSharedPreferences("RFI_File", MODE_PRIVATE);
@@ -506,7 +461,97 @@ public class HomeScreen extends CustomTitle {
 //        }
 //    }
 // Method to get the overflow menu
-private void getOverflowMenu(Context context) {
+
+
+    private void handleFlowData() {
+        viewModel.getFlowModel().observe(this, loginSealedClass -> {
+            if (loginSealedClass instanceof LoginSealedClass.Success<?> successInstance){
+                Object successModel = successInstance.getSuccessModel(); // Access the success model
+
+                if (successModel instanceof LoginUserTableModel loginModel){
+                    rollval = loginModel.getLoginUserRole();
+                    rollvaldashboard = loginModel.getDashboardRole();
+                    Log.d(TAG, "Success handleFlowData LoginUserTableModel: "+loginModel);
+                    checkPreferences = getSharedPreferences("RFI_File", MODE_PRIVATE);
+                    editor = checkPreferences.edit();
+                    editor.putString("roll", loginModel.getLoginUserRole());
+                    editor.commit();
+                    showDashBoard();
+                }
+            }
+            if (loginSealedClass instanceof LoginSealedClass.Failure<?>){
+                hideProgressDialog();
+                displayDialog("Error", "Problem in connection.");
+                Log.d(TAG, "Failure handleFlowData: "+loginSealedClass);
+            }
+            if (loginSealedClass instanceof LoginSealedClass.Loading){
+                boolean isLoading = ((LoginSealedClass.Loading) loginSealedClass).isLoading();
+                if (isLoading){
+                    showProgressDialog(((LoginSealedClass.Loading) loginSealedClass).getMessage());
+                }else {
+                    hideProgressDialog();
+                }
+                Log.d(TAG, "Loading handleFlowData: "+loginSealedClass);
+            }
+            if (loginSealedClass instanceof LoginSealedClass.Message){
+                String me = ((LoginSealedClass.Message) loginSealedClass).getMessage();
+                hideProgressDialog();
+                displayDialog("Error", "Problem in connection.\n Error Message: "+me);
+                Log.d(TAG, "Message handleFlowData: "+me);
+            }
+        });
+    }
+
+    private void showDashBoard() {
+        System.out.println("checking value of User Roll and user ID=" + rollval + " " + db.userId);
+        try {
+            if (rollval.equalsIgnoreCase("maker")) {
+                allocateUnitButton.setEnabled(false);
+                checkRfiLinLayout.setVisibility(View.GONE);
+                approverfiLinLayout.setVisibility(View.GONE);
+                approve_rfi.setEnabled(false);
+            } else if (rollval.equalsIgnoreCase("Approver")) {
+                allocateUnitButton.setEnabled(false);
+                updaterfi.setEnabled(false);
+                allocateTaskLinLayout.setVisibility(View.GONE);
+                updaterfiLinLayout.setVisibility(View.GONE);
+                checkRfiLinLayout.setVisibility(View.GONE);
+                createRfiLinLayout.setVisibility(View.GONE);
+                approverfiLinLayout.setVisibility(View.VISIBLE);
+                approve_rfi.setEnabled(true);
+            } else {
+                System.out.println("checking value2=" + rollval);
+                startInspectButton.setEnabled(false);
+                allocateTask.setEnabled(false);
+                updaterfi.setEnabled(false);
+                allocateTaskLinLayout.setVisibility(View.GONE);
+                createRfiLinLayout.setVisibility(View.GONE);
+                updaterfiLinLayout.setVisibility(View.GONE);
+
+                approverfiLinLayout.setVisibility(View.GONE);
+                approve_rfi.setEnabled(false);
+
+            }
+            //clearAllTableDataExceptUser();
+
+            if (rollvaldashboard) {    //testRfi.setVisibility(View.VISIBLE);
+                testRfi.setEnabled(true);
+                testRfi.setShadowLayer(1.5f, -1, 1, Color.GRAY);
+
+            } else {
+
+                testRfi.setEnabled(false);
+
+                //testRfi.setVisibility(View.GONE);
+            }
+            //flushData();
+
+        } catch (Exception e) {
+            Log.e(TAG, "showDashBoard: Exception ",e );
+        }
+    }
+
+    private void getOverflowMenu(Context context) {
     try {
         ViewConfiguration viewConfig = ViewConfiguration.get(context);
         Field menuKeyField;
@@ -1830,21 +1875,6 @@ private void getOverflowMenu(Context context) {
     }
 
 
-    public boolean isRFIavailableForUser(String user_id) {
-        String columns = "FK_rfi_Id,user_id";
-        String where = "user_id = '" + db.userId + "'";
-        Cursor cursor = db.select("Rfi_New_Create", columns,
-                where, null, null,
-                null, null);
-        if (cursor.getCount() > 0) {
-            return true;
-        } else {
-            return false;
-        }
-
-    }
-
-
     @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
@@ -1879,7 +1909,7 @@ private void getOverflowMenu(Context context) {
     @Override
     protected void onDestroy() {
         // TODO Auto-generated method stub
-        db.closeDb();
+        //db.closeDb();
         super.onDestroy();
 
 
