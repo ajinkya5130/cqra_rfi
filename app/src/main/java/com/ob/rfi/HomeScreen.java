@@ -1,6 +1,7 @@
 package com.ob.rfi;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static com.ob.rfi.RfiApplication.rfiDB;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -1911,8 +1912,7 @@ public class HomeScreen extends CustomTitle {
         // TODO Auto-generated method stub
         //db.closeDb();
         super.onDestroy();
-
-
+        rfiDB.close();
     }
 
     protected void clearAllTableDataExceptUser() {

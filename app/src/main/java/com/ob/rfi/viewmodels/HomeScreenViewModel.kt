@@ -7,7 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.ob.database.RFIRoomDb
 import com.ob.database.db_tables.LoginUserTableModel
-import com.ob.rfi.CustomTitle
+import com.ob.rfi.RfiApplication.rfiDB
 import com.ob.rfi.db.RfiDatabase.userId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ class HomeScreenViewModel:ViewModel() {
     fun getLoginUserData() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val modelIsPresent = CustomTitle.rfiDB.loginUserDao().getLoginUserDataUsingId(userId = userId.toInt())?:LoginUserTableModel()
+                val modelIsPresent = rfiDB.loginUserDao().getLoginUserDataUsingId(userId = userId.toInt())?:LoginUserTableModel()
                 _flowModel.value = LoginSealedClass.Success(modelIsPresent)
             } catch (e: Exception) {
                 Log.e(TAG, "${RFIRoomDb.TAG} - getLoginUserData: Exception: ", e)

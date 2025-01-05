@@ -18,7 +18,7 @@ import com.ob.database.db_tables.QuestionsTableModel
 import com.ob.database.db_tables.SubUnitTableModel
 import com.ob.database.db_tables.UnitAllocateTaskModel
 import com.ob.database.db_tables.WorkTypeAllocateTaskModel
-import com.ob.rfi.CustomTitle
+import com.ob.rfi.RfiApplication.rfiDB
 import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.db.RfiDatabase.selectedGroupId
 import com.ob.rfi.db.RfiDatabase.selectedSchemeId
@@ -97,7 +97,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfCreateRFITableModel =
-                    CustomTitle.rfiDB.createRFITableDao().getAllCreatedRFI() as ArrayList<CreateRFITableModel>
+                    rfiDB.createRFITableDao().getAllCreatedRFI() as ArrayList<CreateRFITableModel>
                 val count = listOfCreateRFITableModel.size
                 Log.d(TAG, "${RFIRoomDb.TAG} - listOfCreateRFITableModel: count: $count ")
                 _lvClientAllocateData.postValue(count)
@@ -112,7 +112,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfClientAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getClientAllocateData(
+                    rfiDB.clientAllocateTaskDao().getClientAllocateData(
                     ) as ArrayList<ClientAllocateTaskModel>
                 if (listOfClientAllocateTaskModel.size != 0) {
                     listOfClientAllocateTaskModel.add(
@@ -139,7 +139,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfSchemaAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getProjectAllocateData(
+                    rfiDB.clientAllocateTaskDao().getProjectAllocateData(
                         RfiDatabase.selectedClientId) as ArrayList<ProjectAllocateTaskModel>
                 if (listOfSchemaAllocateTaskModel.size != 0) {
                     listOfSchemaAllocateTaskModel.add(
@@ -166,7 +166,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfWorkTypeAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getWorkTypeAllocateData(
+                    rfiDB.clientAllocateTaskDao().getWorkTypeAllocateData(
                         selectedSchemeId
                     ) as ArrayList<WorkTypeAllocateTaskModel>
                 if (listOfWorkTypeAllocateTaskModel.size != 0) {
@@ -194,7 +194,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfBuildingAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getBuildingAllocateData(
+                    rfiDB.clientAllocateTaskDao().getBuildingAllocateData(
                         RfiDatabase.selectedWorkTypeId) as ArrayList<BuildingAllocateTaskModel>
                 if (listOfBuildingAllocateTaskModel.size != 0) {
                     listOfBuildingAllocateTaskModel.add(
@@ -221,7 +221,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfFloorAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getFloorAllocateData(
+                    rfiDB.clientAllocateTaskDao().getFloorAllocateData(
                         RfiDatabase.selectedBuildingId) as ArrayList<FloorAllocateTaskModel>
                 if (listOfFloorAllocateTaskModel.size != 0) {
                     listOfFloorAllocateTaskModel.add(
@@ -248,7 +248,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfUnitAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getUnitAllocateData(
+                    rfiDB.clientAllocateTaskDao().getUnitAllocateData(
                         RfiDatabase.selectedFloorId,selectedSchemeId) as ArrayList<UnitAllocateTaskModel>
                 if (listOfUnitAllocateTaskModel.size != 0) {
                     listOfUnitAllocateTaskModel.add(
@@ -276,7 +276,7 @@ class SelectQuestionViewModel: ViewModel() {
             try {
                 val selectedGroupId = if (selectedGroupId.isEmpty()) 0 else selectedGroupId.toInt()
               val listOfAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getAllocateData(
+                    rfiDB.clientAllocateTaskDao().getAllocateData(
                         selectedSchemeId,selectedUnitId,selectedGroupId)
                 if (listOfAllocateTaskModel.subUnitId.isEmpty()){
                     _lvSubUnitAllocateData.postValue(0)
@@ -303,7 +303,7 @@ class SelectQuestionViewModel: ViewModel() {
                 val list = subUnitId.split(",").map { it.trim()} // Convert to List<Int>
                 Log.d(TAG, "getLatestSubUnitAllocateDataFromDB: list: $list")
                 listOfSubUnitAllocateTaskModel =
-                    CustomTitle.rfiDB.subUnitDao().getSubUnitDataFromDB(list) as ArrayList<SubUnitTableModel>
+                    rfiDB.subUnitDao().getSubUnitDataFromDB(list) as ArrayList<SubUnitTableModel>
                 if (listOfSubUnitAllocateTaskModel.size != 0) {
                     listOfSubUnitAllocateTaskModel.add(
                         0,
@@ -329,7 +329,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfCheckListAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getCheckListAllocateData(
+                    rfiDB.clientAllocateTaskDao().getCheckListAllocateData(
                         selectedWorkTypeId) as ArrayList<CheckListAllocateTaskModel>
                 if (listOfCheckListAllocateTaskModel.size != 0) {
                     listOfCheckListAllocateTaskModel.add(
@@ -356,7 +356,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfGroupListAllocateTaskModel =
-                    CustomTitle.rfiDB.clientAllocateTaskDao().getGroupListAllocateData(
+                    rfiDB.clientAllocateTaskDao().getGroupListAllocateData(
                         RfiDatabase.selectedChecklistId) as ArrayList<GroupListAllocateTaskModel>
                 if (listOfGroupListAllocateTaskModel.size != 0) {
                     listOfGroupListAllocateTaskModel.add(
@@ -385,12 +385,12 @@ class SelectQuestionViewModel: ViewModel() {
             model.user_id = userId
             model.coverageText = cov
 
-            val id = CustomTitle.rfiDB.createRFITableDao().insert(model)
+            val id = rfiDB.createRFITableDao().insert(model)
             Log.d(TAG, "insertCreatedRFI: id: $id")
             RfiDatabase.selectedrfiId = id.toString()
             model._id = id.toInt()
             model.FK_rfi_Id = id.toString()
-            val updatedId = CustomTitle.rfiDB.createRFITableDao().update(model)
+            val updatedId = rfiDB.createRFITableDao().update(model)
             Log.d(TAG, "insertCreatedRFI: updatedId: $updatedId")
 
         }
@@ -404,7 +404,7 @@ class SelectQuestionViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfQuestions =
-                    CustomTitle.rfiDB.questionsDao().getQuestionOnChecklistId(
+                    rfiDB.questionsDao().getQuestionOnChecklistId(
                         RfiDatabase.selectedChecklistId.toInt(),
                         RfiDatabase.selectedBuildingId.toInt(),
                         RfiDatabase.selectedGroupId.toInt()

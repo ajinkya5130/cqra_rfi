@@ -21,7 +21,7 @@ import com.ob.database.db_tables.StructureTableModel
 import com.ob.database.db_tables.SubUnitTableModel
 import com.ob.database.db_tables.UnitTableModel
 import com.ob.database.db_tables.WorkTypeTableModel
-import com.ob.rfi.CustomTitle
+import com.ob.rfi.RfiApplication.rfiDB
 import com.ob.rfi.api.APIClient
 import com.ob.rfi.api.ConverterModel
 import com.ob.rfi.db.RfiDatabase
@@ -126,7 +126,7 @@ class AllocateTaskViewModel : ViewModel() {
                         _lvClientData.postValue(1)
                     } else {
                         val dbModel = ConverterModel.convertClientData(it[0])
-                        CustomTitle.rfiDB.clientDao().insert(dbModel)
+                        rfiDB.clientDao().insert(dbModel)
                         getClientData()
                     }
                 }
@@ -176,8 +176,8 @@ class AllocateTaskViewModel : ViewModel() {
                     } else {
                         val dbModel = ConverterModel.convertProjectData(it[0].project)
                         val nodeDbModel = ConverterModel.convertNodeData(it[0].nodeUserDetail)
-                        CustomTitle.rfiDB.projectDao().insert(dbModel)
-                        CustomTitle.rfiDB.nodeUserDetailsDao().insert(nodeDbModel)
+                        rfiDB.projectDao().insert(dbModel)
+                        rfiDB.nodeUserDetailsDao().insert(nodeDbModel)
                         getProjectDataFromDB()
                     }
                 }
@@ -226,7 +226,7 @@ class AllocateTaskViewModel : ViewModel() {
                             _lvWorkTypeData.postValue(1)
                         } else {
                             val dbModel = ConverterModel.convertWorkTypeModel(it)
-                            CustomTitle.rfiDB.workTypeDao().insertAll(dbModel)
+                            rfiDB.workTypeDao().insertAll(dbModel)
                             getWorkTypeFromDB()
                         }
                     } catch (e: Exception) {
@@ -274,7 +274,7 @@ class AllocateTaskViewModel : ViewModel() {
                             _lvStructureData.postValue(1)
                         } else {
                             val dbModel = ConverterModel.convertStructureModel(it)
-                            CustomTitle.rfiDB.structureDao().insertAll(dbModel)
+                            rfiDB.structureDao().insertAll(dbModel)
                             getStructureDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -326,7 +326,7 @@ class AllocateTaskViewModel : ViewModel() {
                                 RfiDatabase.selectedNodeId,
                                 checkListModel
                             )
-                            CustomTitle.rfiDB.checkListDao().insertAll(dbModel)
+                            rfiDB.checkListDao().insertAll(dbModel)
                             getCheckListDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -385,7 +385,7 @@ class AllocateTaskViewModel : ViewModel() {
                                 RfiDatabase.selectedNodeId,
                                 groupListModel
                             )
-                            CustomTitle.rfiDB.groupListDao().insertAll(dbModel)
+                            rfiDB.groupListDao().insertAll(dbModel)
                             getGroupListDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -445,7 +445,7 @@ class AllocateTaskViewModel : ViewModel() {
                             _lvStageData.postValue(1)
                         } else {
                             val dbModel = ConverterModel.convertStageModel(it)
-                            CustomTitle.rfiDB.stageDao().insertAll(dbModel)
+                            rfiDB.stageDao().insertAll(dbModel)
                             getStageDataFromDB()
                         }
 
@@ -508,7 +508,7 @@ class AllocateTaskViewModel : ViewModel() {
                             _lvUnitData.postValue(1)
                         } else {
                             val dbModel = ConverterModel.convertUnitModel(it)
-                            CustomTitle.rfiDB.unitDao().insertAll(dbModel)
+                            rfiDB.unitDao().insertAll(dbModel)
                             getUnitListDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -562,7 +562,7 @@ class AllocateTaskViewModel : ViewModel() {
                             _lvSubUnitData.postValue(1)
                         } else {
                             val dbModel = ConverterModel.convertSubUnitModel(it)
-                            CustomTitle.rfiDB.subUnitDao().insertAll(dbModel)
+                            rfiDB.subUnitDao().insertAll(dbModel)
                             getSubUnitListDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -615,7 +615,7 @@ class AllocateTaskViewModel : ViewModel() {
                         } else {
                             val dbModel = ConverterModel.convertQuestionsModel(model,
                                 RfiDatabase.selectedBuildingId)
-                            CustomTitle.rfiDB.questionsDao().insertAll(dbModel)
+                            rfiDB.questionsDao().insertAll(dbModel)
                             getQuestionsDataFromDB()
                         }
                     } catch (e: Exception) {
@@ -644,7 +644,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfGroupList =
-                    CustomTitle.rfiDB.groupListDao().getAllGroupList(
+                    rfiDB.groupListDao().getAllGroupList(
                         RfiDatabase.selectedChecklistId,
                         RfiDatabase.selectedNodeId
                     ) as ArrayList<GroupListTableModel>
@@ -674,7 +674,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfUnitList =
-                    CustomTitle.rfiDB.unitDao()
+                    rfiDB.unitDao()
                         .getAllUnitList(RfiDatabase.selectedFloorId) as ArrayList<UnitTableModel>
                 if (listOfUnitList.size != 0) {
                     listOfUnitList.add(0, UnitTableModel(Unit_Name = "Select Unit", Unit_ID = NO_DATA_AVAILABLE_VAL))
@@ -698,7 +698,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfSubUnitList =
-                    CustomTitle.rfiDB.subUnitDao().getAllSubUnitList(
+                    rfiDB.subUnitDao().getAllSubUnitList(
                         RfiDatabase.selectedUnitId,
                         RfiDatabase.selectedSchemeId,
                         RfiDatabase.selectedWorkTypeId
@@ -728,7 +728,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfQuestions =
-                    CustomTitle.rfiDB.questionsDao().getAllQuestionsList(
+                    rfiDB.questionsDao().getAllQuestionsList(
                         clientId,
                         RfiDatabase.selectedSchemeId.toInt(),
                         RfiDatabase.selectedGroupId.toInt()
@@ -758,7 +758,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfStage =
-                    CustomTitle.rfiDB.stageDao().getAllStagesOrFloor(
+                    rfiDB.stageDao().getAllStagesOrFloor(
                         RfiDatabase.selectedSchemeId,
                         RfiDatabase.selectedBuildingId,
                         RfiDatabase.selectedWorkTypeId
@@ -788,7 +788,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfWorkType =
-                    CustomTitle.rfiDB.workTypeDao()
+                    rfiDB.workTypeDao()
                         .getAllWork(RfiDatabase.selectedSchemeId) as ArrayList<WorkTypeTableModel>
                 if (listOfWorkType.size != 0) {
                     listOfWorkType.add(
@@ -815,7 +815,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfCheckList =
-                    CustomTitle.rfiDB.checkListDao().getAllCheckList(
+                    rfiDB.checkListDao().getAllCheckList(
                         RfiDatabase.selectedWorkTypeId,
                         RfiDatabase.selectedNodeId
                     ) as ArrayList<ChecklistTableModel>
@@ -843,7 +843,7 @@ class AllocateTaskViewModel : ViewModel() {
     fun getClientData() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                list = CustomTitle.rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
+                list = rfiDB.clientDao().getAllClient() as ArrayList<ClientTableModel>
                 if (list.size != 0) {
                     list.add(0, ClientTableModel(clientId = NO_DATA_AVAILABLE_VAL.toInt(), clientName = "Select Client"))
                 }
@@ -861,7 +861,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfProject =
-                    CustomTitle.rfiDB.projectDao()
+                    rfiDB.projectDao()
                         .getAllProjects(clientId.toString()) as ArrayList<ProjectTableModel>
                 if (listOfProject.size != 0) {
                     listOfProject.add(0, ProjectTableModel(PK_Scheme_ID = NO_DATA_AVAILABLE_VAL, Scheme_Name = "Select Project"))
@@ -880,7 +880,7 @@ class AllocateTaskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfStructure =
-                    CustomTitle.rfiDB.structureDao().getAllStructure(
+                    rfiDB.structureDao().getAllStructure(
                         RfiDatabase.selectedSchemeId,
                         RfiDatabase.selectedWorkTypeId
                     ) as ArrayList<StructureTableModel>
@@ -898,7 +898,7 @@ class AllocateTaskViewModel : ViewModel() {
 
     fun insertAllocateTask(model: AllocateTaskTableModel) {
         viewModelScope.launch(Dispatchers.IO) {
-            CustomTitle.rfiDB.allocateTaskDao().insert(model)
+            rfiDB.allocateTaskDao().insert(model)
         }
 
     }

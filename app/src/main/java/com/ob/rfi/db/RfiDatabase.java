@@ -314,9 +314,9 @@ public class RfiDatabase {
 	
 	
 	public void closeDb() {
-		if(this.db.isOpen()){
+		/*if(this.db.isOpen()){
 			this.db.close();
-		}
+		}*/
 	}
 
 	public	String getNamebyId(String table,String id){

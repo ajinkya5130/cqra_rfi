@@ -17,7 +17,6 @@ import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.ob.database.RFIRoomDb;
 import com.ob.rfi.service.GlobalProgressDialog;
 
 
@@ -25,14 +24,12 @@ public class CustomTitle extends AppCompatActivity {
 
 	public static boolean network_available = true;
 	//private static final RoomDbObject roomDbObject = RoomDbObject.INSTANCE;
-	public static RFIRoomDb rfiDB = null;
+
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
-
-		rfiDB = RFIRoomDb.Companion.getDatabase(this);
 		//request custom title bar
 		/*requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
 	//	getWindow().setBackgroundDrawable(getResources().getDrawable(R.drawable.bg));

@@ -10,7 +10,7 @@ import com.google.gson.JsonObject
 import com.ob.AppUtil.FIREBASE_AUTH_TOKEN
 import com.ob.database.RFIRoomDb
 import com.ob.database.db_tables.LoginUserTableModel
-import com.ob.rfi.CustomTitle
+import com.ob.rfi.RfiApplication.rfiDB
 import com.ob.rfi.api.APIClient
 import com.ob.rfi.models.APIErrorModel
 import com.ob.rfi.models.SignInResponseModel
@@ -86,15 +86,15 @@ class LoginViewModel:ViewModel() {
     fun getLoginUserData(model: LoginUserTableModel, fromAPI: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val modelIsPresent = CustomTitle.rfiDB.loginUserDao().getLoginUserData(model.loginUserName)?:LoginUserTableModel()
+                val modelIsPresent = rfiDB.loginUserDao().getLoginUserData(model.loginUserName)?:LoginUserTableModel()
                 Log.d(TAG, "${RFIRoomDb.TAG} - getLoginUserData: model:$modelIsPresent, model: $model ")
                 if(fromAPI){
                     if(modelIsPresent.pkLoginUserId ==0){
                         Log.d(TAG, "- insert ")
-                        CustomTitle.rfiDB.loginUserDao().insert(model)
+                        rfiDB.loginUserDao().insert(model)
                     }else{
                         Log.d(TAG, "- update ")
-                        CustomTitle.rfiDB.loginUserDao().update(model)
+                        rfiDB.loginUserDao().update(model)
                     }
                 }
                 _flowModel.value = LoginSealedClass.Success(modelIsPresent)

@@ -1909,6 +1909,7 @@ dependencies {
     implementation files('libs/ksoap2-android-assembly-2.6.0-jar-with-dependencies.jar')
     implementation files('libs/picasso-2.3.3.jar')
     implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.6.2' // Latest stable version
 
     implementation ("com.google.firebase:firebase-messaging:23.4.0")
 

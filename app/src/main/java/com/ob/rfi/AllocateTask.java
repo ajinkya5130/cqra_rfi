@@ -1076,7 +1076,6 @@ public class AllocateTask extends CustomTitle {
         super.onBackPressed();
         db.selectedHeadingId = "";
         finish();
-        db.closeDb();
         startActivity(new Intent(this, HomeScreen.class));
     }
 

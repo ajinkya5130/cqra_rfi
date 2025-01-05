@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.ob.database.RFIRoomDb
 import com.ob.database.db_tables.AnswerTableModel
 import com.ob.database.db_tables.QuestionsTableModel
-import com.ob.rfi.CustomTitle
+import com.ob.rfi.RfiApplication.rfiDB
 import com.ob.rfi.db.RfiDatabase
 import com.ob.rfi.db.RfiDatabase.selectedChecklistId
 import com.ob.rfi.db.RfiDatabase.selectedGroupId
@@ -42,7 +42,7 @@ class RFIQuestionScrollViewModel:ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 listOfQuestions =
-                    CustomTitle.rfiDB.questionsDao().getQuestionOnChecklistId(
+                    rfiDB.questionsDao().getQuestionOnChecklistId(
                         RfiDatabase.selectedChecklistId.toInt(),
                         RfiDatabase.selectedBuildingId.toInt(),
                         RfiDatabase.selectedGroupId.toInt()
@@ -72,7 +72,7 @@ class RFIQuestionScrollViewModel:ViewModel() {
     fun insertDefaultAnswer(answerTableModel: AnswerTableModel) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val value = CustomTitle.rfiDB.answerDao().insert(answerTableModel)
+                val value = rfiDB.answerDao().insert(answerTableModel)
                 Log.d(TAG, "insertDefaultAnswer: value: $value")
             }catch (e:Exception){
                 Log.e(TAG, "insertDefaultAnswer: Exception: ",e)
@@ -82,13 +82,13 @@ class RFIQuestionScrollViewModel:ViewModel() {
     }
 
     private suspend fun getQuestionAnswer(qId: String): AnswerTableModel {
-        val value = CustomTitle.rfiDB.answerDao().getAnswer(qId,selectedChecklistId,selectedGroupId,selectedrfiId)
+        val value = rfiDB.answerDao().getAnswer(qId,selectedChecklistId,selectedGroupId,selectedrfiId)
         Log.d(TAG, "getQuestionAnswer: value: $value")
         return value
     }
 
     private suspend fun getQuestionAnswerUsingRfId(qId: String): AnswerTableModel {
-        val value = CustomTitle.rfiDB.answerDao().getAnswerUsingRfId(qId,selectedrfiId)
+        val value = rfiDB.answerDao().getAnswerUsingRfId(qId,selectedrfiId)
         Log.d(TAG, "getQuestionAnswer: value: $value")
         return value
     }
@@ -140,7 +140,7 @@ class RFIQuestionScrollViewModel:ViewModel() {
     fun updateQuestionAnswer(value: AnswerTableModel) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val updatedVal = CustomTitle.rfiDB.answerDao().update(value)
+                val updatedVal = rfiDB.answerDao().update(value)
                 Log.d(TAG, "insertDefaultAnswer: value: $updatedVal")
             }catch (e:Exception){
                 Log.e(TAG, "insertDefaultAnswer: Exception: ",e)
